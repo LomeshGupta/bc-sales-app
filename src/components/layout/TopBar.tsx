@@ -55,7 +55,7 @@ export function TopBar() {
         sx={{
           px: { xs: 2, sm: 3 },
           height: {
-            xs: `calc(56px + env(safe-area-inset-top))`,
+            xs: `calc(15% + env(safe-area-inset-top))`,
             sm: `calc(64px + env(safe-area-inset-top))`,
           },
           minHeight: {
