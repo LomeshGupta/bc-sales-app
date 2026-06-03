@@ -33,9 +33,18 @@ export default function DashboardLayout({
         sx={{
           flexGrow: 1,
           ml: { xs: 0, md: 2 },
-          mt: { xs: "56px", sm: "64px" },
-          pb: { xs: "75px", md: "24px" },
-          minHeight: { xs: "calc(100dvh - 56px)", sm: "calc(100dvh - 64px)" },
+
+          mt: {
+            xs: "calc(56px + env(safe-area-inset-top))",
+            sm: "calc(64px + env(safe-area-inset-top))",
+          },
+
+          pb: {
+            xs: "calc(75px + env(safe-area-inset-bottom))",
+            md: "24px",
+          },
+
+          minHeight: "100dvh",
           overflow: "auto",
           display: "flex",
           flexDirection: "column",
