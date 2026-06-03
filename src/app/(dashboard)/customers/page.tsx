@@ -170,7 +170,28 @@ function CustomerDetailDrawer({
       anchor="right"
       open={!!customer}
       onClose={onClose}
-      slotProps={{ paper: { sx: { width: { xs: "100%", sm: 400 } } } }}
+      slotProps={{
+        paper: {
+          sx: {
+            width: {
+              xs: "90%",
+              sm: 400,
+            },
+            m: {
+              xs: "5%",
+              sm: 0,
+            },
+            height: {
+              xs: "85%",
+              sm: "100%",
+            },
+            borderRadius: {
+              xs: 3,
+              sm: 0,
+            },
+          },
+        },
+      }}
     >
       <Box sx={{ p: 3, height: "100%", overflow: "auto" }}>
         <Box

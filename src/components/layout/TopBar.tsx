@@ -42,17 +42,25 @@ export function TopBar() {
       position="fixed"
       elevation={0}
       sx={{
-        zIndex: (t) => t.zIndex.drawer - 1,
-        pt: "env(safe-area-inset-top)",
-        backdropFilter: "blur(10px)",
+        zIndex: (theme) => theme.zIndex.drawer + 1,
+        paddingTop: "env(safe-area-inset-top)",
+        backgroundColor: "background.paper",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
       }}
     >
       <Toolbar
+        disableGutters
         sx={{
-          px: { xs: 1.5, sm: 3 },
+          px: { xs: 2, sm: 3 },
+          height: {
+            xs: `calc(56px + env(safe-area-inset-top))`,
+            sm: `calc(64px + env(safe-area-inset-top))`,
+          },
           minHeight: {
-            xs: "calc(56px + env(safe-area-inset-top))",
-            sm: 64,
+            xs: `calc(56px + env(safe-area-inset-top)) !important`,
+            sm: `calc(64px + env(safe-area-inset-top)) !important`,
           },
         }}
       >

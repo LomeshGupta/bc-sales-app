@@ -32,7 +32,6 @@ export default function DashboardLayout({
         component="main"
         sx={{
           flexGrow: 1,
-          ml: { xs: 0, md: 2 },
 
           mt: {
             xs: "calc(56px + env(safe-area-inset-top))",
@@ -40,14 +39,12 @@ export default function DashboardLayout({
           },
 
           pb: {
-            xs: "calc(75px + env(safe-area-inset-bottom))",
-            md: "24px",
+            xs: "calc(80px + env(safe-area-inset-bottom))",
+            md: 3,
           },
 
           minHeight: "100dvh",
-          overflow: "auto",
-          display: "flex",
-          flexDirection: "column",
+          overflowX: "hidden",
         }}
       >
         <PageTransition>{children}</PageTransition>
