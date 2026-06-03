@@ -1,5 +1,5 @@
-'use client';
-import React from 'react';
+"use client";
+import React from "react";
 import {
   Box,
   Grid,
@@ -12,22 +12,25 @@ import {
   useTheme,
   Fab,
   Tooltip,
-} from '@mui/material';
-import { Add, Refresh } from '@mui/icons-material';
-import { motion } from 'framer-motion';
-import { useQueryClient } from '@tanstack/react-query';
-import { KPICard, KPICardSkeleton } from '@/components/cards/KPICard';
-import { SalesChart } from '@/components/charts/SalesChart';
-import { RecentActivityList } from '@/components/cards/RecentActivityCard';
-import { useDashboardKPIs, useSalesSummary, useRecentActivity } from '@/hooks/useQueries';
-import { useAuthStore } from '@/store/authStore';
-import { useRouter } from 'next/navigation';
-import { ROUTES } from '@/constants';
-
+} from "@mui/material";
+import { Add, Refresh } from "@mui/icons-material";
+import { motion } from "framer-motion";
+import { useQueryClient } from "@tanstack/react-query";
+import { KPICard, KPICardSkeleton } from "@/components/cards/KPICard";
+import { SalesChart } from "@/components/charts/SalesChart";
+import { RecentActivityList } from "@/components/cards/RecentActivityCard";
+import {
+  useDashboardKPIs,
+  useSalesSummary,
+  useRecentActivity,
+} from "@/hooks/useQueries";
+import { useAuthStore } from "@/store/authStore";
+import { useRouter } from "next/navigation";
+import { ROUTES } from "@/constants";
 
 export default function DashboardPage() {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const router = useRouter();
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
@@ -37,36 +40,49 @@ export default function DashboardPage() {
   const { data: activity, isLoading: activityLoading } = useRecentActivity();
 
   const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard"] });
   };
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    return 'Good evening';
+    if (hour < 12) return "Good morning";
+    if (hour < 17) return "Good afternoon";
+    return "Good evening";
   };
 
   return (
-    <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 1400, mx: 'auto', width: '100%' }}>
+    <Box
+      sx={{ p: { xs: 2, sm: 3 }, maxWidth: 1400, mx: "auto", width: "100%" }}
+    >
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 3 }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            mb: 3,
+          }}
+        >
           <Box>
             <Typography
-              variant={isMobile ? 'h5' : 'h4'}
-              sx={{  fontWeight: 800, letterSpacing: "-0.02em", lineHeight: 1 }}
-              
-              
+              variant={isMobile ? "h5" : "h4"}
+              sx={{ fontWeight: 800, letterSpacing: "-0.02em", lineHeight: 1 }}
             >
-              {getGreeting()}{user?.displayName ? `, ${user.displayName.split(' ')[0]}` : ''}
+              {getGreeting()}
+              {user?.displayName ? `, ${user.displayName.split(" ")[0]}` : ""}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              {new Date().toLocaleDateString("en-US", {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
             </Typography>
           </Box>
           <Tooltip title="Refresh data">
@@ -75,7 +91,7 @@ export default function DashboardPage() {
               size="small"
               startIcon={<Refresh />}
               onClick={handleRefresh}
-              sx={{ display: { xs: 'none', sm: 'flex' } }}
+              sx={{ display: { xs: "none", sm: "flex" } }}
             >
               Refresh
             </Button>
@@ -104,7 +120,10 @@ export default function DashboardPage() {
           <SalesChart data={salesSummary || []} isLoading={salesLoading} />
         </Grid>
         <Grid size={{ xs: 12, md: 5 }}>
-          <RecentActivityList data={activity || []} isLoading={activityLoading} />
+          <RecentActivityList
+            data={activity || []}
+            isLoading={activityLoading}
+          />
         </Grid>
       </Grid>
 
@@ -115,50 +134,79 @@ export default function DashboardPage() {
         transition={{ delay: 0.5, duration: 0.4 }}
       >
         <Box sx={{ mt: 3 }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 700,  mb: 1.5 }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5 }}>
             Quick Actions
           </Typography>
           <Grid container spacing={1.5}>
             {[
-              { label: 'New Order', color: '#D32F2F', path: ROUTES.SALES_ORDERS },
-              { label: 'Add Customer', color: '#2196F3', path: ROUTES.CUSTOMERS },
-              { label: 'View Reports', color: '#4CAF50', path: ROUTES.REPORTS },
-              { label: 'All Orders', color: '#FF9800', path: ROUTES.SALES_ORDERS },
+              {
+                label: "New Order",
+                color: "#D32F2F",
+                path: ROUTES.SALES_ORDERS,
+              },
+              {
+                label: "Add Customer",
+                color: "#2196F3",
+                path: ROUTES.CUSTOMERS,
+              },
+              { label: "View Reports", color: "#4CAF50", path: ROUTES.REPORTS },
+              {
+                label: "All Orders",
+                color: "#FF9800",
+                path: ROUTES.SALES_ORDERS,
+              },
             ].map((action, idx) => (
               <Grid size={{ xs: 6, sm: 3 }} key={action.label}>
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.6 + idx * 0.05, type: 'spring', stiffness: 300, damping: 25 }}
+                  transition={{
+                    delay: 0.6 + idx * 0.05,
+                    type: "spring",
+                    stiffness: 300,
+                    damping: 25,
+                  }}
                   whileTap={{ scale: 0.95 }}
                 >
                   <Card
                     onClick={() => router.push(action.path)}
                     sx={{
-                      cursor: 'pointer',
-                      border: '1px solid',
-                      borderColor: 'divider',
-                      '&:hover': { borderColor: action.color, boxShadow: `0 4px 20px ${action.color}20` },
-                      transition: 'all 0.2s ease',
+                      cursor: "pointer",
+                      border: "1px solid",
+                      borderColor: "divider",
+                      "&:hover": {
+                        borderColor: action.color,
+                        boxShadow: `0 4px 20px ${action.color}20`,
+                      },
+                      transition: "all 0.2s ease",
                     }}
                   >
-                    <CardContent sx={{ p: 2, '&:last-child': { pb: 2 }, textAlign: 'center' }}>
+                    <CardContent
+                      sx={{
+                        p: 2,
+                        "&:last-child": { pb: 2 },
+                        textAlign: "center",
+                      }}
+                    >
                       <Box
                         sx={{
                           width: 40,
                           height: 40,
                           borderRadius: 2,
                           bgcolor: `${action.color}15`,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          mx: 'auto',
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          mx: "auto",
                           mb: 1,
                         }}
                       >
                         <Add sx={{ color: action.color, fontSize: 20 }} />
                       </Box>
-                      <Typography variant="caption" sx={{  fontWeight: 600, display: "block" }} >
+                      <Typography
+                        variant="caption"
+                        sx={{ fontWeight: 600, display: "block" }}
+                      >
                         {action.label}
                       </Typography>
                     </CardContent>
@@ -171,7 +219,7 @@ export default function DashboardPage() {
       </motion.div>
 
       {/* FAB for mobile */}
-      <Fab
+      {/* <Fab
         color="primary"
         sx={{
           position: 'fixed',
@@ -184,7 +232,7 @@ export default function DashboardPage() {
         onClick={() => router.push(ROUTES.SALES_ORDERS)}
       >
         <Add />
-      </Fab>
+      </Fab> */}
     </Box>
   );
 }

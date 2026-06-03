@@ -109,11 +109,11 @@ export function TopBar() {
               sx={{
                 fontWeight: 700,
                 fontSize: {
-                  xs: "0.95rem",
+                  xs: "1rem",
                   sm: "1.1rem",
                 },
                 letterSpacing: "-0.02em",
-                lineHeight: 1,
+                lineHeight: 1.2,
               }}
             >
               {APP_NAME}
