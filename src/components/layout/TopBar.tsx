@@ -55,11 +55,11 @@ export function TopBar() {
         sx={{
           px: { xs: 2, sm: 3 },
           height: {
-            xs: `calc(20px + env(safe-area-inset-top))`,
+            xs: `50px`,
             sm: `calc(64px + env(safe-area-inset-top))`,
           },
           minHeight: {
-            xs: `calc(56px + env(safe-area-inset-top)) !important`,
+            xs: `calc(30px + env(safe-area-inset-top)) !important`,
             sm: `calc(64px + env(safe-area-inset-top)) !important`,
           },
         }}
