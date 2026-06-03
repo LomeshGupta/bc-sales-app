@@ -157,7 +157,7 @@ export default function LoginPage() {
               {APP_NAME}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              Business Central Sales Portal
+              Singer Sales App
             </Typography>
           </motion.div>
         </Box>
@@ -186,7 +186,7 @@ export default function LoginPage() {
                 Sign In
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                Enter your Business Central credentials
+                Enter your credentials
               </Typography>
 
               {error && (
@@ -294,7 +294,7 @@ export default function LoginPage() {
             color="text.disabled"
             sx={{ display: "block", textAlign: "center", mt: 3 }}
           >
-            Secured by Microsoft Dynamics 365 Business Central
+            Powered by Velvotix
           </Typography>
         </motion.div>
       </motion.div>
