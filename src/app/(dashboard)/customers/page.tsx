@@ -177,13 +177,17 @@ function CustomerDetailDrawer({
               xs: "90%",
               sm: 400,
             },
-            m: {
+            height: {
+              xs: "calc(100% - 40px)",
+              sm: "100%",
+            },
+            top: {
               xs: "5%",
               sm: 0,
             },
-            height: {
-              xs: "85%",
-              sm: "100%",
+            right: {
+              xs: "5%",
+              sm: 0,
             },
             borderRadius: {
               xs: 3,
