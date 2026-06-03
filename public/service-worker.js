@@ -1,64 +1,70 @@
 // BC Sales PWA Service Worker
-const CACHE_VERSION = 'v1.0.0';
+const CACHE_VERSION = "v1.0.0";
 const STATIC_CACHE = `bc-sales-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `bc-sales-dynamic-${CACHE_VERSION}`;
 const API_CACHE = `bc-sales-api-${CACHE_VERSION}`;
 
 // Assets to cache immediately on install
-const STATIC_ASSETS = [
-  '/',
-  '/dashboard',
-  '/offline',
-  '/manifest.json',
-];
+const STATIC_ASSETS = ["/", "/dashboard", "/offline", "/manifest.json"];
 
 // ─── Install ──────────────────────────────────────────────────────────────────
-self.addEventListener('install', (event) => {
+self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
       .open(STATIC_CACHE)
       .then((cache) => cache.addAll(STATIC_ASSETS))
-      .then(() => self.skipWaiting())
+      .then(() => self.skipWaiting()),
   );
 });
 
 // ─── Activate ─────────────────────────────────────────────────────────────────
-self.addEventListener('activate', (event) => {
+self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys
-          .filter((key) => key !== STATIC_CACHE && key !== DYNAMIC_CACHE && key !== API_CACHE)
-          .map((key) => caches.delete(key))
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(
+          keys
+            .filter(
+              (key) =>
+                key !== STATIC_CACHE &&
+                key !== DYNAMIC_CACHE &&
+                key !== API_CACHE,
+            )
+            .map((key) => caches.delete(key)),
+        ),
       )
-    ).then(() => self.clients.claim())
+      .then(() => self.clients.claim()),
   );
 });
 
 // ─── Fetch Strategy ───────────────────────────────────────────────────────────
-self.addEventListener('fetch', (event) => {
+self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
   // Skip non-GET requests and browser extensions
-  if (request.method !== 'GET' || url.protocol === 'chrome-extension:') return;
+  if (request.method !== "GET" || url.protocol === "chrome-extension:") return;
 
   // API requests: Network first, fall back to cache
-  if (url.hostname.includes('businesscentral') || url.hostname.includes('microsoftonline')) {
+  if (
+    url.hostname.includes("businesscentral") ||
+    url.hostname.includes("microsoftonline")
+  ) {
     event.respondWith(networkFirstStrategy(request, API_CACHE));
     return;
   }
 
   // Next.js static assets: Cache first
-  if (url.pathname.startsWith('/_next/static/')) {
+  if (url.pathname.startsWith("/_next/static/")) {
     event.respondWith(cacheFirstStrategy(request, STATIC_CACHE));
     return;
   }
 
   // Pages: Network first with offline fallback
-  if (request.mode === 'navigate') {
+  if (request.mode === "navigate") {
     event.respondWith(
-      fetch(request).catch(() => caches.match('/offline') || caches.match('/'))
+      fetch(request).catch(() => caches.match("/offline") || caches.match("/")),
     );
     return;
   }
@@ -78,9 +84,12 @@ async function networkFirstStrategy(request, cacheName) {
     return networkResponse;
   } catch {
     const cached = await caches.match(request);
-    return cached || new Response(JSON.stringify({ error: 'Offline', value: [] }), {
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return (
+      cached ||
+      new Response(JSON.stringify({ error: "Offline", value: [] }), {
+        headers: { "Content-Type": "application/json" },
+      })
+    );
   }
 }
 
@@ -93,7 +102,7 @@ async function cacheFirstStrategy(request, cacheName) {
     cache.put(request, networkResponse.clone());
     return networkResponse;
   } catch {
-    return new Response('Network error', { status: 503 });
+    return new Response("Network error", { status: 503 });
   }
 }
 
@@ -110,40 +119,40 @@ async function staleWhileRevalidate(request, cacheName) {
 }
 
 // ─── Background Sync ──────────────────────────────────────────────────────────
-self.addEventListener('sync', (event) => {
-  if (event.tag === 'sync-orders') {
+self.addEventListener("sync", (event) => {
+  if (event.tag === "sync-orders") {
     event.waitUntil(syncOfflineOrders());
   }
 });
 
 async function syncOfflineOrders() {
   // Future: sync offline-created orders when back online
-  console.log('[SW] Syncing offline orders...');
+  console.log("[SW] Syncing offline orders...");
 }
 
 // ─── Push Notifications ───────────────────────────────────────────────────────
-self.addEventListener('push', (event) => {
+self.addEventListener("push", (event) => {
   if (!event.data) return;
   const data = event.data.json();
   event.waitUntil(
-    self.registration.showNotification(data.title || 'BC Sales', {
+    self.registration.showNotification(data.title || "Singer Sales", {
       body: data.body,
-      icon: '/icons/icon-192x192.png',
-      badge: '/icons/icon-72x72.png',
-      data: { url: data.url || '/dashboard' },
+      icon: "/icons/icon-192x192.png",
+      badge: "/icons/icon-72x72.png",
+      data: { url: data.url || "/dashboard" },
       actions: [
-        { action: 'view', title: 'View' },
-        { action: 'dismiss', title: 'Dismiss' },
+        { action: "view", title: "View" },
+        { action: "dismiss", title: "Dismiss" },
       ],
-    })
+    }),
   );
 });
 
-self.addEventListener('notificationclick', (event) => {
+self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  if (event.action === 'view' || !event.action) {
+  if (event.action === "view" || !event.action) {
     event.waitUntil(
-      clients.openWindow(event.notification.data?.url || '/dashboard')
+      clients.openWindow(event.notification.data?.url || "/dashboard"),
     );
   }
 });

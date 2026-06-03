@@ -90,7 +90,7 @@ export function TopBar() {
                 },
               }}
             >
-              BC
+              S
             </Typography>
           </Box>
 

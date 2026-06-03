@@ -32,8 +32,8 @@ export const ROUTES = {
 export const DEFAULT_PAGE_SIZE = 20;
 export const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
 
-export const APP_NAME = "BC Sales";
-export const APP_FULL_NAME = "Business Central Sales";
+export const APP_NAME = "Singer Sales";
+export const APP_FULL_NAME = "Singer Sales App";
 export const APP_VERSION = "1.1.0";
 
 export const ORDER_STATUS_COLORS = {
