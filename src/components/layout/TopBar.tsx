@@ -42,7 +42,7 @@ export function TopBar() {
       position="fixed"
       elevation={0}
       sx={{
-        zIndex: (theme) => theme.zIndex.drawer + 1,
+        zIndex: (theme) => theme.zIndex.drawer - 1,
         paddingTop: "env(safe-area-inset-top)",
         backgroundColor: "background.paper",
         backdropFilter: "blur(20px)",
