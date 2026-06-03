@@ -34,7 +34,7 @@ export default function DashboardLayout({
           flexGrow: 1,
 
           mt: {
-            xs: "calc(30% + env(safe-area-inset-top))",
+            xs: "calc(25% + env(safe-area-inset-top))",
             sm: "calc(64px + env(safe-area-inset-top))",
           },
 
