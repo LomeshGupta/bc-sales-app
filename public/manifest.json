@@ -1,7 +1,7 @@
 {
-  "name": "Sales App",
-  "short_name": "Sales",
-  "description": "Enterprise Sales Application powered by Microsoft Dynamics 365 Business Central",
+  "name": "Sales India Sales App",
+  "short_name": "SISA",
+  "description": "Enterprise Sales Application powered by Velvotix",
   "start_url": "/dashboard",
   "scope": "/",
   "display": "standalone",
@@ -13,19 +13,19 @@
 
   "icons": [
     {
-      "src": "/icons/icon-192x192.png",
+      "src": "/icons/icon.svg",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-152x152.png",
+      "src": "/icons/icon.svg",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-152x152.png",
+      "src": "/icons/icon.svg",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
@@ -40,7 +40,7 @@
       "url": "/dashboard",
       "icons": [
         {
-          "src": "/icons/icon-192x192.png",
+          "src": "/icons/icon.svg",
           "sizes": "192x192",
           "type": "image/png"
         }
@@ -53,7 +53,7 @@
       "url": "/sales-orders",
       "icons": [
         {
-          "src": "/icons/icon-192x192.png",
+          "src": "/icons/icon.svg",
           "sizes": "192x192",
           "type": "image/png"
         }
