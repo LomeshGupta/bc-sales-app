@@ -10,6 +10,7 @@ export const BC_SCOPE =
   "https://api.businesscentral.dynamics.com/.default";
 export const BC_ENV_NAME = process.env.NEXT_ENV_NAME || "Sandbox_151225";
 export const SESSION_DURATION_MS = 30 * 60 * 1000;
+export const COMPANY_NAME = process.env.NEXT_COMP_NAME || "My%20Company";
 export const TOKEN_REFRESH_BUFFER_MS = 5 * 60 * 1000;
 
 export const STORAGE_KEYS = {

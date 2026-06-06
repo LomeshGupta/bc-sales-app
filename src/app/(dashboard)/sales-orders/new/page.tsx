@@ -53,6 +53,8 @@ import {
   useItems,
   useCreateSalesOrder,
 } from "@/hooks/useQueries";
+
+const MotionTableRow = motion(TableRow);
 import { Customer, BCItem, CreateSalesOrderLine } from "@/types";
 import { formatCurrency, getInitials, stringToColor } from "@/utils";
 import { ROUTES } from "@/constants";
@@ -107,7 +109,7 @@ function LineItemRow({
 }) {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
-  const [itemSearch, setItemSearch] = useState(line.item?.description || "");
+  // const [itemSearch, setItemSearch] = useState(line.item?.description || "");
 
   const updateField = (field: keyof OrderLine, value: any) => {
     const updates: Partial<OrderLine> = { [field]: value };
@@ -120,7 +122,7 @@ function LineItemRow({
   };
 
   return (
-    <motion.tr
+    <MotionTableRow
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: -20 }}
@@ -138,8 +140,8 @@ function LineItemRow({
           options={items}
           getOptionLabel={(o) => `${o.no} – ${o.description}`}
           value={line.item || null}
-          inputValue={itemSearch}
-          onInputChange={(_, v) => setItemSearch(v)}
+          // inputValue={itemSearch}
+          // onInputChange={(_, v) => setItemSearch(v)}
           onChange={(_, item) => {
             if (item) {
               onUpdate(line._key, {
@@ -150,27 +152,37 @@ function LineItemRow({
                 unitOfMeasureCode: item.unitOfMeasureCode,
                 total: item.unitPrice * line.quantity,
               });
-              setItemSearch(item.description);
+              // setItemSearch(item.description);
             }
           }}
-          renderOption={(props, option) => (
-            <Box component="li" {...props} sx={{ gap: 1.5 }}>
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                  {option.no}
-                </Typography>
-                <Typography variant="caption" color="text.secondary" noWrap>
-                  {option.description}
+          renderOption={(props, option) => {
+            const { key, ...optionProps } = props;
+
+            return (
+              <Box component="li" key={key} {...optionProps} sx={{ gap: 1.5 }}>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    {option.no}
+                  </Typography>
+
+                  <Typography variant="caption" color="text.secondary" noWrap>
+                    {option.description}
+                  </Typography>
+                </Box>
+
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontWeight: 700,
+                    color: "primary.main",
+                    flexShrink: 0,
+                  }}
+                >
+                  {formatCurrency(option.unitPrice)}
                 </Typography>
               </Box>
-              <Typography
-                variant="caption"
-                sx={{ fontWeight: 700, color: "primary.main", flexShrink: 0 }}
-              >
-                {formatCurrency(option.unitPrice)}
-              </Typography>
-            </Box>
-          )}
+            );
+          }}
           renderInput={(params) => (
             <TextField
               {...params}
@@ -212,10 +224,12 @@ function LineItemRow({
           size="small"
           type="number"
           value={line.quantity}
-          onChange={(e) =>
-            updateField("quantity", Math.max(1, Number(e.target.value)))
-          }
-          slotProps={{ input: { inputProps: { min: 1 } } }}
+          onChange={(e) => {
+            const value = e.target.value;
+
+            updateField("quantity", value === "" ? 0 : Number(value));
+          }}
+          slotProps={{ input: { inputProps: { min: 0 } } }}
           sx={{ width: 80 }}
         />
       </TableCell>
@@ -281,7 +295,7 @@ function LineItemRow({
           </IconButton>
         </Tooltip>
       </TableCell>
-    </motion.tr>
+    </MotionTableRow>
   );
 }
 
@@ -385,7 +399,8 @@ function MobileLineCard({
                   type="number"
                   value={line.quantity}
                   onChange={(e) => {
-                    const q = Math.max(1, Number(e.target.value));
+                    const q =
+                      e.target.value === "" ? 0 : Number(e.target.value);
                     onUpdate(line._key, {
                       quantity: q,
                       total:
@@ -866,49 +881,53 @@ export default function NewSalesOrderPage() {
                         c.no?.toLowerCase().includes(q),
                     );
                   }}
-                  renderOption={(props, customer) => (
-                    <Box
-                      component="li"
-                      {...props}
-                      key={customer.id}
-                      sx={{
-                        display: "flex",
-                        gap: 1.5,
-                        py: 1.5,
-                      }}
-                    >
-                      <Avatar
+                  renderOption={(props, customer) => {
+                    const { key, ...optionProps } = props;
+
+                    return (
+                      <Box
+                        component="li"
+                        key={key}
+                        {...optionProps}
                         sx={{
-                          width: 36,
-                          height: 36,
-                          bgcolor: stringToColor(customer.name),
-                          fontSize: "0.8rem",
-                          fontWeight: 700,
-                          flexShrink: 0,
+                          display: "flex",
+                          gap: 1.5,
+                          py: 1.5,
                         }}
                       >
-                        {getInitials(customer.name)}
-                      </Avatar>
-
-                      <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography
-                          variant="body2"
-                          sx={{ fontWeight: 600 }}
-                          noWrap
+                        <Avatar
+                          sx={{
+                            width: 36,
+                            height: 36,
+                            bgcolor: stringToColor(customer.name),
+                            fontSize: "0.8rem",
+                            fontWeight: 700,
+                            flexShrink: 0,
+                          }}
                         >
-                          {customer.name}
-                        </Typography>
+                          {getInitials(customer.name)}
+                        </Avatar>
 
-                        <Typography variant="caption" color="text.secondary">
-                          {customer.no} • {customer.city}
-                        </Typography>
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography
+                            variant="body2"
+                            sx={{ fontWeight: 600 }}
+                            noWrap
+                          >
+                            {customer.name}
+                          </Typography>
+
+                          <Typography variant="caption" color="text.secondary">
+                            {customer.no} • {customer.city}
+                          </Typography>
+                        </Box>
+
+                        {customer.blocked && (
+                          <Chip label="Blocked" size="small" color="error" />
+                        )}
                       </Box>
-
-                      {customer.blocked && (
-                        <Chip label="Blocked" size="small" color="error" />
-                      )}
-                    </Box>
-                  )}
+                    );
+                  }}
                   renderInput={(params) => (
                     <TextField
                       {...params}

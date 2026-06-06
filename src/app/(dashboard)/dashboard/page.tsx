@@ -128,7 +128,7 @@ export default function DashboardPage() {
       </Grid>
 
       {/* Quick Actions Row */}
-      <motion.div
+      {/* <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5, duration: 0.4 }}
@@ -216,7 +216,7 @@ export default function DashboardPage() {
             ))}
           </Grid>
         </Box>
-      </motion.div>
+      </motion.div> */}
 
       {/* FAB for mobile */}
       {/* <Fab

@@ -1,7 +1,7 @@
 // ─── Currency Formatting ──────────────────────────────────────────────────────
-export function formatCurrency(amount: number, currency = 'USD'): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
+export function formatCurrency(amount: number, currency = "USD"): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
     currency,
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
@@ -9,17 +9,17 @@ export function formatCurrency(amount: number, currency = 'USD'): string {
 }
 
 export function formatCurrencyCompact(amount: number): string {
-  if (amount >= 1000000) return `$${(amount / 1000000).toFixed(1)}M`;
-  if (amount >= 1000) return `$${(amount / 1000).toFixed(1)}K`;
-  return `$${amount}`;
+  if (amount >= 1000000) return `₹${(amount / 1000000).toFixed(1)}M`;
+  if (amount >= 1000) return `₹${(amount / 1000).toFixed(1)}K`;
+  return `₹${amount}`;
 }
 
 // ─── Date Formatting ──────────────────────────────────────────────────────────
 export function formatDate(dateString: string): string {
-  return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
+  return new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
   }).format(new Date(dateString));
 }
 
@@ -31,7 +31,7 @@ export function formatRelativeTime(dateString: string): string {
   const hours = Math.floor(diff / 3600000);
   const days = Math.floor(diff / 86400000);
 
-  if (minutes < 1) return 'Just now';
+  if (minutes < 1) return "Just now";
   if (minutes < 60) return `${minutes}m ago`;
   if (hours < 24) return `${hours}h ago`;
   if (days < 7) return `${days}d ago`;
@@ -40,11 +40,11 @@ export function formatRelativeTime(dateString: string): string {
 
 // ─── Number Formatting ────────────────────────────────────────────────────────
 export function formatNumber(n: number): string {
-  return new Intl.NumberFormat('en-US').format(n);
+  return new Intl.NumberFormat("en-US").format(n);
 }
 
 export function formatPercent(n: number, decimals = 1): string {
-  return `${n >= 0 ? '+' : ''}${n.toFixed(decimals)}%`;
+  return `${n >= 0 ? "+" : ""}${n.toFixed(decimals)}%`;
 }
 
 // ─── String Utilities ─────────────────────────────────────────────────────────
@@ -55,9 +55,9 @@ export function truncate(str: string, maxLength: number): string {
 
 export function getInitials(name: string): string {
   return name
-    .split(' ')
+    .split(" ")
     .map((n) => n[0])
-    .join('')
+    .join("")
     .toUpperCase()
     .slice(0, 2);
 }
@@ -65,14 +65,14 @@ export function getInitials(name: string): string {
 // ─── Color Utilities ──────────────────────────────────────────────────────────
 export function getStatusColor(status: string): string {
   const colors: Record<string, string> = {
-    Open: '#2196F3',
-    Released: '#4CAF50',
-    'Pending Approval': '#FF9800',
-    'Pending Prepayment': '#FF5722',
-    Shipped: '#9C27B0',
-    Invoiced: '#009688',
+    Open: "#2196F3",
+    Released: "#4CAF50",
+    "Pending Approval": "#FF9800",
+    "Pending Prepayment": "#FF5722",
+    Shipped: "#9C27B0",
+    Invoiced: "#009688",
   };
-  return colors[status] || '#757575';
+  return colors[status] || "#757575";
 }
 
 export function stringToColor(str: string): string {
