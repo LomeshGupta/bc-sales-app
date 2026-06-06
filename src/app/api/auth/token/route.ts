@@ -20,7 +20,6 @@ export async function POST() {
       { status: 500 },
     );
   }
-  console.log(1);
   const tokenUrl = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`;
 
   const params = new URLSearchParams({

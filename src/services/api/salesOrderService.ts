@@ -39,9 +39,8 @@ async function bcGet<T>(
       url.searchParams.append(key, value);
     }
   });
-
-  console.log("BC URL:", url.toString());
-
+  console.log(url);
+  console.log(url.toString());
   const response = await fetch(url.toString(), {
     method: "GET",
     headers: {
@@ -63,7 +62,6 @@ async function bcGet<T>(
 async function bcPost<T>(endpoint: string, body: unknown): Promise<T> {
   const token = await getOAuthToken();
 
-  console.log(body);
   const response = await fetch(`${BC_BASE_URL}/${endpoint}`, {
     method: "POST",
     headers: {
@@ -96,9 +94,7 @@ export async function getSalesOrders(
   };
 
   if (search) {
-    query.$filter =
-      `contains(customerNo,'${search}') or ` +
-      `contains(externalDocumentNo,'${search}')`;
+    query.$filter = `contains(bcOrderNo,'${search}')`;
   }
 
   const data = await bcGet<{
@@ -126,7 +122,7 @@ export async function getSalesOrderById(
   const data = await bcGet<{
     value: any[];
   }>("StagingHeader", {
-    filter: `id eq '${systemId}'`,
+    $filter: `id eq ${systemId}`,
   });
 
   if (!data.value.length) {
@@ -146,9 +142,8 @@ export async function getSalesOrderLines(
   const data = await bcGet<{
     value: any[];
   }>("StagingLine", {
-    filter: `headerSystemId eq '${headerSystemId}'`,
+    $filter: `headerSystemId eq ${headerSystemId}`,
   });
-  console.log(data);
   return data.value.map(mapStagingLine);
 }
 

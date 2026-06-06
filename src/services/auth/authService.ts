@@ -41,8 +41,6 @@ export async function loginUser(credentials: LoginCredentials): Promise<{
     // ── Step 2: Authenticate user via BC proxy route ──────────────────────────
     const filterValue = `username='${credentials.username}' and password='${credentials.password}'`;
     const url = `${BC_API_BASE_URL}/${BC_TENANT_ID}/${BC_ENV_NAME}/api/v2.0/companies(${BC_COMPANY_ID})/customers`;
-    console.log(url);
-    console.log(tokenData.access_token);
     const res = await fetch(url, {
       headers: {
         Authorization: `Bearer ${tokenData.access_token}`,

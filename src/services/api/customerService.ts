@@ -19,7 +19,7 @@ async function bcGet<T>(
     `${BC_API_BASE_URL}/${BC_TENANT_ID}/${BC_ENV_NAME}` +
     `/api/v2.0/companies(${BC_COMPANY_ID})${path}` +
     `?${searchParams.toString()}`;
-
+  console.log(url);
   const res = await fetch(url, {
     headers: {
       Authorization: `Bearer ${tokenData.access_token}`,
@@ -49,12 +49,11 @@ export async function getCustomers(
       $skip: String((page - 1) * pageSize),
       $count: "true",
     };
-
+    console.log(search);
     if (search?.trim()) {
       const escapedSearch = search.replace(/'/g, "''");
-
-      bcParams["$filter"] =
-        `contains(displayName,'${escapedSearch}') or contains(number,'${escapedSearch}')`;
+      console.log(escapedSearch);
+      bcParams["$filter"] = `contains(displayName,'${escapedSearch}')`;
     }
 
     const data = await bcGet<{
