@@ -112,34 +112,34 @@ export async function getCustomerById(id: string): Promise<Customer | null> {
   }
 }
 
-function mapBCCustomer(bc: any): Customer {
+export function mapBCCustomer(bc: any): Customer {
   return {
     id: bc.id,
 
     no: bc.number,
+
     name: bc.displayName,
 
-    address:
-      [bc.addressLine1, bc.addressLine2].filter(Boolean).join(", ") || "",
+    address: [bc.addressLine1, bc.addressLine2].filter(Boolean).join(", "),
 
-    city: bc.city || "",
-    country: bc.country || "",
+    city: bc.city,
 
-    phone: bc.phoneNumber || "",
-    email: bc.email || "",
+    country: bc.country,
 
-    balance: Number(bc.balanceDue ?? 0),
-    creditLimit: Number(bc.creditLimit ?? 0),
+    phone: bc.phoneNumber,
+
+    email: bc.email,
+
+    balance: Number(bc.balanceDue || 0),
+
+    creditLimit: Number(bc.creditLimit || 0),
 
     currency: bc.currencyCode || "INR",
 
-    salesperson: bc.salespersonCode || "",
-    customerGroup: bc.type || "",
+    salesperson: bc.salespersonCode,
 
-    blocked:
-      bc.blocked === true ||
-      bc.blocked === "All" ||
-      bc.blocked === "Ship" ||
-      bc.blocked === "Invoice",
+    customerGroup: bc.type,
+
+    blocked: bc.blocked !== "" && bc.blocked !== "_x0020_",
   };
 }

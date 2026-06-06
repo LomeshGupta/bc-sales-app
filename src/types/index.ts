@@ -25,7 +25,13 @@ export interface SalesOrder {
   customerNo: string;
   customerName: string;
   orderDate: string;
-  status: 'Open' | 'Released' | 'Pending Approval' | 'Pending Prepayment' | 'Shipped' | 'Invoiced';
+  status:
+    | "Open"
+    | "Released"
+    | "Pending Approval"
+    | "Pending Prepayment"
+    | "Shipped"
+    | "Invoiced";
   amount: number;
   currency: string;
   salesperson: string;
@@ -52,7 +58,7 @@ export interface SalesOrderLine {
 // ─── Create Sales Order (Phase 2) ────────────────────────────────────────────
 export interface CreateSalesOrderLine {
   lineNo: number;
-  type?: 'Item' | 'G/L Account' | 'Resource' | 'Fixed Asset' | 'Charge (Item)';
+  type?: "Item" | "G/L Account" | "Resource" | "Fixed Asset" | "Charge (Item)";
   itemNo: string;
   description: string;
   quantity: number;
@@ -85,7 +91,7 @@ export interface BCItem {
   description: string;
   unitPrice: number;
   unitOfMeasureCode: string;
-  inventory?: number;
+  inventory: number;
   itemCategoryCode?: string;
   type?: string;
 }
@@ -114,7 +120,7 @@ export interface KPICard {
   title: string;
   value: number | string;
   change: number;
-  changeType: 'increase' | 'decrease' | 'neutral';
+  changeType: "increase" | "decrease" | "neutral";
   currency?: boolean;
   icon: string;
   color: string;
@@ -129,7 +135,7 @@ export interface SalesSummary {
 
 export interface RecentActivity {
   id: string;
-  type: 'order' | 'customer' | 'payment' | 'shipment';
+  type: "order" | "customer" | "payment" | "shipment";
   description: string;
   time: string;
   amount?: number;
@@ -141,7 +147,7 @@ export interface Report {
   id: string;
   title: string;
   description: string;
-  category: 'sales' | 'finance' | 'inventory' | 'customers';
+  category: "sales" | "finance" | "inventory" | "customers";
   lastGenerated?: string;
   icon: string;
 }
@@ -149,8 +155,8 @@ export interface Report {
 // ─── API Helpers ──────────────────────────────────────────────────────────────
 export interface BCApiResponse<T> {
   value: T[];
-  '@odata.count'?: number;
-  '@odata.nextLink'?: string;
+  "@odata.count"?: number;
+  "@odata.nextLink"?: string;
 }
 
 export interface PaginationParams {
@@ -170,13 +176,13 @@ export interface PaginatedResponse<T> {
 }
 
 // ─── App ──────────────────────────────────────────────────────────────────────
-export type ThemeMode = 'light' | 'dark';
+export type ThemeMode = "light" | "dark";
 
 export interface AppNotification {
   id: string;
   title: string;
   message: string;
-  type: 'info' | 'success' | 'warning' | 'error';
+  type: "info" | "success" | "warning" | "error";
   read: boolean;
   timestamp: string;
 }

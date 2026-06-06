@@ -7,13 +7,12 @@ import {
 } from "@/types";
 
 import { DEFAULT_PAGE_SIZE } from "@/constants";
-
 import { getOAuthToken } from "../auth/tokenService";
 
 import { BC_TENANT_ID, BC_ENV_NAME } from "@/constants";
 
 // ======================================================
-// BC CONFIG
+// CONFIG
 // ======================================================
 
 const COMPANY_NAME = "My Company";
@@ -24,7 +23,7 @@ const BC_BASE_URL =
   `/ODataV4/Company('${encodeURIComponent(COMPANY_NAME)}')`;
 
 // ======================================================
-// BC HELPER
+// HELPERS
 // ======================================================
 
 async function bcGet<T>(
@@ -41,17 +40,21 @@ async function bcGet<T>(
     }
   });
 
+  console.log("BC URL:", url.toString());
+
   const response = await fetch(url.toString(), {
     method: "GET",
     headers: {
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${token.access_token}`,
       Accept: "application/json",
     },
     cache: "no-store",
   });
 
   if (!response.ok) {
-    throw new Error(await response.text());
+    const err = await response.text();
+    console.log("BC ERROR:", err);
+    throw new Error(err);
   }
 
   return response.json();
@@ -60,30 +63,11 @@ async function bcGet<T>(
 async function bcPost<T>(endpoint: string, body: unknown): Promise<T> {
   const token = await getOAuthToken();
 
+  console.log(body);
   const response = await fetch(`${BC_BASE_URL}/${endpoint}`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
-
-  if (!response.ok) {
-    throw new Error(await response.text());
-  }
-
-  return response.json();
-}
-
-async function bcPatch<T>(endpoint: string, body: unknown): Promise<T> {
-  const token = await getOAuthToken();
-
-  const response = await fetch(`${BC_BASE_URL}/${endpoint}`, {
-    method: "PATCH",
-    headers: {
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${token.access_token}`,
       Accept: "application/json",
       "Content-Type": "application/json",
     },
@@ -98,7 +82,7 @@ async function bcPatch<T>(endpoint: string, body: unknown): Promise<T> {
 }
 
 // ======================================================
-// SALES ORDERS
+// GET STAGING ORDERS
 // ======================================================
 
 export async function getSalesOrders(
@@ -113,15 +97,15 @@ export async function getSalesOrders(
 
   if (search) {
     query.$filter =
-      `contains(No,'${search}') or ` +
-      `contains(Sell_to_Customer_Name,'${search}')`;
+      `contains(customerNo,'${search}') or ` +
+      `contains(externalDocumentNo,'${search}')`;
   }
 
   const data = await bcGet<{
     value: any[];
-  }>("SalesOrderList", query);
+  }>("StagingHeader", query);
 
-  const orders = data.value.map(mapBCOrder);
+  const orders = data.value.map(mapStagingHeader);
 
   return {
     data: orders,
@@ -132,127 +116,154 @@ export async function getSalesOrders(
   };
 }
 
+// ======================================================
+// GET SINGLE ORDER
+// ======================================================
+
 export async function getSalesOrderById(
-  orderNo: string,
+  systemId: string,
 ): Promise<SalesOrder | null> {
   const data = await bcGet<{
     value: any[];
-  }>("SalesOrderList", {
-    $filter: `No eq '${orderNo}'`,
+  }>("StagingHeader", {
+    filter: `id eq '${systemId}'`,
   });
 
   if (!data.value.length) {
     return null;
   }
 
-  return mapBCOrder(data.value[0]);
-}
-
-export async function getSalesOrderLines(
-  orderNo: string,
-): Promise<SalesOrderLine[]> {
-  const data = await bcGet<{
-    value: any[];
-  }>("SalesOrderLines", {
-    $filter: `Document_No eq '${orderNo}'`,
-  });
-
-  return data.value.map(mapBCOrderLine);
+  return mapStagingHeader(data.value[0]);
 }
 
 // ======================================================
-// CREATE SALES ORDER
+// GET LINES
+// ======================================================
+
+export async function getSalesOrderLines(
+  headerSystemId: string,
+): Promise<SalesOrderLine[]> {
+  const data = await bcGet<{
+    value: any[];
+  }>("StagingLine", {
+    filter: `headerSystemId eq '${headerSystemId}'`,
+  });
+  console.log(data);
+  return data.value.map(mapStagingLine);
+}
+
+// ======================================================
+// CREATE ORDER
 // ======================================================
 
 export async function createSalesOrder(
   payload: CreateSalesOrderPayload,
 ): Promise<SalesOrder> {
-  const bcPayload = {
+  const header = await bcPost<any>("StagingHeader", {
     customerNo: payload.customerNo,
+
     orderDate: payload.orderDate,
-    requestedDeliveryDate: payload.requestedDeliveryDate,
+
+    requestedDeliveryDate: payload.requestedDeliveryDate || null,
+
     externalDocumentNo: payload.externalDocumentNo || "",
-    locationCode: payload.locationCode || "MAIN",
-    salespersonCode: payload.salespersonCode || "",
-    paymentTermsCode: payload.paymentTermsCode || "NET30",
-    currencyCode: payload.currencyCode || "",
+
     yourReference: payload.yourReference || "",
+
+    locationCode: payload.locationCode || "",
+
+    paymentTermsCode: payload.paymentTermsCode || "",
+
+    salespersonCode: payload.salespersonCode || "",
+
     shipToName: payload.shipToName || "",
+
     shipToAddress: payload.shipToAddress || "",
+
     shipToCity: payload.shipToCity || "",
+
     shipToCountry: payload.shipToCountry || "",
-    lines: payload.lines.map((line) => ({
+  });
+
+  for (const line of payload.lines) {
+    await bcPost("StagingLine", {
+      headerSystemId: header.id,
+
       lineNo: line.lineNo,
-      type: line.type || "Item",
-      no: line.itemNo,
-      description: line.description,
+
+      itemNo: line.itemNo,
+
+      description: line.description || "",
+
       quantity: line.quantity,
-      unitOfMeasureCode: line.unitOfMeasureCode || "PCS",
+
       unitPrice: line.unitPrice,
-      lineDiscountPercent: line.discountPercent || 0,
-    })),
-  };
 
-  const result = await bcPost<any>("salesOrders", bcPayload);
+      discountPercent: line.discountPercent || 0,
 
-  return mapBCOrder(result);
+      unitOfMeasureCode: line.unitOfMeasureCode || "PCS",
+    });
+  }
+
+  return mapStagingHeader(header);
 }
 
 // ======================================================
 // MAPPERS
 // ======================================================
 
-function mapBCOrder(bc: any): SalesOrder {
+function mapStagingHeader(bc: any): SalesOrder {
   return {
-    id: bc.No,
-    orderNo: bc.No,
+    id: bc.id,
 
-    customerNo: bc.Sell_to_Customer_No,
+    orderNo: bc.bcOrderNo || "",
 
-    customerName: bc.Sell_to_Customer_Name,
+    customerNo: bc.customerNo,
 
-    orderDate: bc.Posting_Date,
+    customerName: bc.shipToName || "",
 
-    status: bc.Status,
+    orderDate: bc.orderDate,
 
-    amount: Number(bc.Amount || 0),
+    status: bc.status,
 
-    currency: bc.Currency_Code || "INR",
+    amount: 0,
 
-    salesperson: bc.Salesperson_Code || "",
+    currency: "INR",
 
-    shipmentDate: bc.Shipment_Date,
+    salesperson: bc.salespersonCode,
 
-    externalDocumentNo: bc.External_Document_No,
+    shipmentDate: bc.requestedDeliveryDate,
 
-    locationCode: bc.Location_Code,
+    externalDocumentNo: bc.externalDocumentNo,
 
-    paymentTermsCode: bc.Payment_Terms_Code,
+    locationCode: bc.locationCode,
+
+    paymentTermsCode: bc.paymentTermsCode,
   };
 }
 
-function mapBCOrderLine(bc: any): SalesOrderLine {
+function mapStagingLine(bc: any): SalesOrderLine {
   return {
-    id: bc.Document_No + "-" + bc.Line_No,
+    id: `${bc.headerSystemId}-${bc.lineNo}`,
 
-    orderId: bc.Document_No,
+    orderId: bc.headerSystemId,
 
-    lineNo: bc.Line_No,
+    lineNo: bc.lineNo,
 
-    itemNo: bc.No,
+    itemNo: bc.itemNo,
 
-    description: bc.Description,
+    description: bc.description,
 
-    quantity: Number(bc.Quantity || 0),
+    quantity: Number(bc.quantity || 0),
 
-    unitPrice: Number(bc.Unit_Price || 0),
+    unitPrice: Number(bc.unitPrice || 0),
 
-    lineAmount: Number(bc.Amount || 0),
+    lineAmount: Number(bc.quantity || 0) * Number(bc.unitPrice || 0),
 
-    discountPercent: Number(bc.Line_Discount_Percent || 0),
+    discountPercent: Number(bc.discountPercent || 0),
 
-    unitOfMeasureCode: bc.Unit_of_Measure_Code,
+    unitOfMeasureCode: bc.unitOfMeasureCode,
 
-    type: bc.Type,
+    type: "Item",
   };
 }
