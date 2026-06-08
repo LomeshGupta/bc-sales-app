@@ -11,6 +11,7 @@ export interface BCUser {
   displayName?: string;
   email?: string;
   role?: string;
+  location?: string;
 }
 
 export interface LoginCredentials {

@@ -54,11 +54,63 @@ import {
   useCreateSalesOrder,
 } from "@/hooks/useQueries";
 
+import {
+  BC_TENANT_ID,
+  BC_COMPANY_ID,
+  BC_API_BASE_URL,
+  BC_ENV_NAME,
+  COMPANY_NAME,
+} from "@/constants";
+
 const MotionTableRow = motion(TableRow);
 import { Customer, BCItem, CreateSalesOrderLine } from "@/types";
 import { formatCurrency, getInitials, stringToColor } from "@/utils";
 import { ROUTES } from "@/constants";
 import { alpha } from "@mui/material/styles";
+import { useAuthStore } from "@/store/authStore";
+import { getOAuthToken } from "@/services/auth/tokenService";
+
+interface BCProcessResponse {
+  "@odata.context": string;
+  value: string;
+}
+
+interface BCProcessResult {
+  success: boolean;
+  message: string;
+}
+
+export async function processSalesOrders(): Promise<BCProcessResult> {
+  const tokenData = await getOAuthToken();
+
+  const url =
+    `${BC_API_BASE_URL}/${BC_TENANT_ID}/${BC_ENV_NAME}` +
+    `/ODataV4/Velvotix_ProcessHeader?Company=${encodeURIComponent(COMPANY_NAME)}`;
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${tokenData.access_token}`,
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({}),
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `ProcessHeader failed (${response.status} ${response.statusText})`,
+    );
+  }
+
+  const data: BCProcessResponse = await response.json();
+
+  try {
+    return JSON.parse(data.value) as BCProcessResult;
+  } catch {
+    throw new Error("Invalid response received from Business Central");
+  }
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface OrderLine extends CreateSalesOrderLine {
@@ -483,6 +535,7 @@ function MobileLineCard({
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function NewSalesOrderPage() {
+  const user = useAuthStore((state) => state.user);
   const router = useRouter();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -505,7 +558,7 @@ export default function NewSalesOrderPage() {
     requestedDeliveryDate: "",
     externalDocumentNo: "",
     yourReference: "",
-    locationCode: "MAIN",
+    locationCode: user?.location || "",
     paymentTermsCode: "NET30",
     salespersonCode: "",
     shipToName: "",
@@ -643,6 +696,8 @@ export default function NewSalesOrderPage() {
       },
       {
         onSuccess: (order) => {
+          processSalesOrders();
+
           setSuccessOrder(order.orderNo);
           setStep(4); // success screen
         },
@@ -1195,6 +1250,7 @@ export default function NewSalesOrderPage() {
                           onInputChange={(_, v) =>
                             updateForm("locationCode", v)
                           }
+                          disabled
                           renderInput={(params) => (
                             <TextField {...params} label="Location Code" />
                           )}
