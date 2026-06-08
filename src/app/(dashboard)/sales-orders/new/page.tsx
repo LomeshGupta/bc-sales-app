@@ -694,8 +694,8 @@ export default function NewSalesOrderPage() {
         })),
       },
       {
-        onSuccess: (order) => {
-          processSalesOrders();
+        onSuccess: async (order) => {
+          await processSalesOrders();
 
           setSuccessOrder(order.orderNo);
           setStep(4);
