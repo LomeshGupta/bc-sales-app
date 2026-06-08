@@ -99,7 +99,7 @@ export async function getSalesOrders(
 
   const data = await bcGet<{
     value: any[];
-  }>("StagingHeader", query);
+  }>("SOHeaderAPI", query);
 
   const orders = data.value.map(mapStagingHeader);
 
@@ -121,7 +121,7 @@ export async function getSalesOrderById(
 ): Promise<SalesOrder | null> {
   const data = await bcGet<{
     value: any[];
-  }>("StagingHeader", {
+  }>("SOHeaderAPI", {
     $filter: `id eq ${systemId}`,
   });
 
@@ -141,7 +141,7 @@ export async function getSalesOrderLines(
 ): Promise<SalesOrderLine[]> {
   const data = await bcGet<{
     value: any[];
-  }>("StagingLine", {
+  }>("SOLineAPI", {
     $filter: `headerSystemId eq ${headerSystemId}`,
   });
   return data.value.map(mapStagingLine);
@@ -221,7 +221,7 @@ function mapStagingHeader(bc: any): SalesOrder {
 
     status: bc.status,
 
-    amount: 0,
+    amount: bc.amount,
 
     currency: "INR",
 

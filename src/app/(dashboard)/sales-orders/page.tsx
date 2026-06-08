@@ -61,7 +61,11 @@ function OrderCard({ order, index }: { order: SalesOrder; index: number }) {
       layout
     >
       <Card
-        onClick={() => router.push(`${ROUTES.SALES_ORDERS}/${order.id}`)}
+        onClick={() => {
+          const encodedId = order.id;
+
+          router.push(`${ROUTES.SALES_ORDERS}/${encodedId}`);
+        }}
         sx={{
           mb: 1.5,
           cursor: "pointer",
@@ -344,9 +348,11 @@ export default function SalesOrdersPage() {
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           transition={{ delay: idx * 0.02 }}
-                          onClick={() =>
-                            router.push(`${ROUTES.SALES_ORDERS}/${order.id}`)
-                          }
+                          onClick={() => {
+                            const encodedId = order.id;
+
+                            router.push(`${ROUTES.SALES_ORDERS}/${encodedId}`);
+                          }}
                           sx={{
                             cursor: "pointer",
                             "&:hover": {
