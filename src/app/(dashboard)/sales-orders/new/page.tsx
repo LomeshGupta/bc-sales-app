@@ -85,7 +85,7 @@ export async function processSalesOrders(): Promise<BCProcessResult> {
 
   const url =
     `${BC_API_BASE_URL}/${BC_TENANT_ID}/${BC_ENV_NAME}` +
-    `/ODataV4/Velvotix_ProcessHeader?Company=${encodeURIComponent(COMPANY_NAME)}`;
+    `/ODataV4/Velvotix_ProcessHeader?Company=${COMPANY_NAME}`;
 
   const response = await fetch(url, {
     method: "POST",
