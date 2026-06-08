@@ -94,7 +94,6 @@ export async function processSalesOrders(): Promise<BCProcessResult> {
       Accept: "application/json",
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({}),
   });
 
   if (!response.ok) {
@@ -699,7 +698,7 @@ export default function NewSalesOrderPage() {
           processSalesOrders();
 
           setSuccessOrder(order.orderNo);
-          setStep(4); // success screen
+          setStep(4);
         },
       },
     );
