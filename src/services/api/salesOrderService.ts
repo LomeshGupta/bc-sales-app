@@ -92,7 +92,7 @@ export async function getSalesOrders(
     $top: String(pageSize),
     $skip: String((page - 1) * pageSize),
     $count: "true",
-    $orderby: "orderDate desc",
+    $orderby: "createdDateTime desc",
   };
 
   if (search?.trim()) {
