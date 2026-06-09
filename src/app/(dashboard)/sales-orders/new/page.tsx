@@ -838,7 +838,7 @@ export default function NewSalesOrderPage() {
               New Sales Order
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Create and submit to Business Central
+              Create and submit
             </Typography>
           </Box>
         </Box>
@@ -1863,7 +1863,7 @@ export default function NewSalesOrderPage() {
                 }
                 sx={{ px: 4 }}
               >
-                {submitting ? "Submitting..." : "Submit to Business Central"}
+                {submitting ? "Submitting..." : "Submit"}
               </Button>
             )}
           </Box>
