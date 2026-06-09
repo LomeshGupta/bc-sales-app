@@ -48,8 +48,9 @@ export async function getCustomers(
       $top: String(pageSize),
       $skip: String((page - 1) * pageSize),
       $count: "true",
+      $filter: "displayName ne '' and blocked eq '_x0020_'",
     };
-    console.log(search);
+
     if (search?.trim()) {
       const escapedSearch = search.replace(/'/g, "''");
       console.log(escapedSearch);
@@ -91,6 +92,7 @@ export async function getAllCustomers(): Promise<Customer[]> {
     const data = await bcGet<{ value: any[] }>("/customers", {
       $top: "5000",
       $orderby: "displayName asc",
+      $filter: "displayName ne '' and blocked eq '_x0020_'",
     });
 
     return data.value.map(mapBCCustomer);

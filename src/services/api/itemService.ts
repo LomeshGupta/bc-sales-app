@@ -52,6 +52,7 @@ export async function getItems(search?: string): Promise<BCItem[]> {
     const params: Record<string, string> = {
       $top: "500",
       $orderby: "displayName asc",
+      $filter: "displayName ne '' and blocked eq false",
     };
 
     if (search?.trim()) {
@@ -125,6 +126,7 @@ export async function getAllItems(): Promise<BCItem[]> {
     }>("/items", {
       $top: "5000",
       $orderby: "displayName asc",
+      $filter: "displayName ne '' and blocked eq 'false'",
     });
 
     return data.value.map(mapBCItem);
