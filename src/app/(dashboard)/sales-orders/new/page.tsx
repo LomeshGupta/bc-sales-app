@@ -245,16 +245,20 @@ function LineItemRow({
                     : "rgba(0,0,0,0.02)",
                 },
               }}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <>
-                      <Search
-                        sx={{ fontSize: 16, color: "text.disabled", mr: 0.5 }}
-                      />
-                    </>
-                  ),
-                },
+              InputProps={{
+                ...params.InputProps,
+                startAdornment: (
+                  <>
+                    <Search
+                      sx={{
+                        fontSize: 16,
+                        color: "text.disabled",
+                        mr: 0.5,
+                      }}
+                    />
+                    {params.InputProps.startAdornment}
+                  </>
+                ),
               }}
             />
           )}
