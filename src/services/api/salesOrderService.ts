@@ -91,27 +91,31 @@ export async function getSalesOrders(
   const query: Record<string, string> = {
     $top: String(pageSize),
     $skip: String((page - 1) * pageSize),
+    $count: "true",
+    $orderby: "orderDate desc",
   };
 
-  if (search) {
-    query.$filter = `contains(bcOrderNo,'${search}')`;
+  if (search?.trim()) {
+    query.$filter = `contains(bcOrderNo,'${search.replace(/'/g, "''")}')`;
   }
 
   const data = await bcGet<{
     value: any[];
+    "@odata.count"?: number;
   }>("SOHeaderAPI", query);
 
   const orders = data.value.map(mapStagingHeader);
 
+  const total = data["@odata.count"] ?? orders.length;
+
   return {
     data: orders,
-    total: orders.length,
+    total,
     page,
     pageSize,
-    totalPages: Math.ceil(orders.length / pageSize),
+    totalPages: Math.ceil(total / pageSize),
   };
 }
-
 // ======================================================
 // GET SINGLE ORDER
 // ======================================================
