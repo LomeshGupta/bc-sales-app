@@ -36,6 +36,7 @@ interface BCLoginResult {
   message: string;
   fullName?: string;
   Location?: string;
+  SalesRep?: string;
 }
 
 export async function loginUser(credentials: LoginCredentials): Promise<{
@@ -120,6 +121,7 @@ export async function loginUser(credentials: LoginCredentials): Promise<{
       email: "",
       role: "",
       location: result.Location,
+      SalesRep: result.SalesRep,
     };
 
     // ============================================================

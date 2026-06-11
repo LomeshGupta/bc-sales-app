@@ -3,11 +3,15 @@ import {
   BC_COMPANY_ID,
   BC_API_BASE_URL,
   BC_ENV_NAME,
+  COMPANY_NAME,
 } from "@/constants";
 
 import { Customer, PaginationParams, PaginatedResponse } from "@/types";
 import { DEFAULT_PAGE_SIZE } from "@/constants";
 import { getOAuthToken, calculateTokenExpiry } from "../auth/tokenService";
+
+import { useAuthStore } from "@/store/authStore";
+const user = useAuthStore.getState().user;
 
 async function bcGet<T>(
   path: string,
@@ -17,7 +21,7 @@ async function bcGet<T>(
   const tokenData = await getOAuthToken();
   const url =
     `${BC_API_BASE_URL}/${BC_TENANT_ID}/${BC_ENV_NAME}` +
-    `/api/v2.0/companies(${BC_COMPANY_ID})${path}` +
+    `/ODataV4/company('${COMPANY_NAME}')${path}` +
     `?${searchParams.toString()}`;
   console.log(url);
   const res = await fetch(url, {
@@ -48,7 +52,7 @@ export async function getCustomers(
       $top: String(pageSize),
       $skip: String((page - 1) * pageSize),
       $count: "true",
-      $filter: "displayName ne '' and blocked eq '_x0020_'",
+      $filter: "displayName ne '' and userName eq '" + user?.username + "'",
     };
 
     if (search?.trim()) {
@@ -60,7 +64,7 @@ export async function getCustomers(
     const data = await bcGet<{
       value: any[];
       "@odata.count"?: number;
-    }>("/customers", bcParams);
+    }>("/velvotixcustomers", bcParams);
 
     const total = data["@odata.count"] ?? data.value.length;
 
@@ -89,10 +93,10 @@ export async function getCustomers(
  */
 export async function getAllCustomers(): Promise<Customer[]> {
   try {
-    const data = await bcGet<{ value: any[] }>("/customers", {
+    const data = await bcGet<{ value: any[] }>("/velvotixcustomers", {
       $top: "5000",
       $orderby: "displayName asc",
-      $filter: "displayName ne '' and blocked eq '_x0020_'",
+      $filter: `displayName ne '' and userName eq '${user?.username}'`,
     });
 
     return data.value.map(mapBCCustomer);
@@ -104,7 +108,7 @@ export async function getAllCustomers(): Promise<Customer[]> {
 
 export async function getCustomerById(id: string): Promise<Customer | null> {
   try {
-    const data = await bcGet<any>(`/customers(${id})`);
+    const data = await bcGet<any>(`/velvotixcustomers(${id})`);
 
     return mapBCCustomer(data);
   } catch (error) {

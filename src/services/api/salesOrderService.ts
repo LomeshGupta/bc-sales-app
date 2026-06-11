@@ -10,6 +10,8 @@ import { DEFAULT_PAGE_SIZE } from "@/constants";
 import { getOAuthToken } from "../auth/tokenService";
 
 import { BC_TENANT_ID, BC_ENV_NAME } from "@/constants";
+import { useAuthStore } from "@/store/authStore";
+const user = useAuthStore.getState().user;
 
 // ======================================================
 // CONFIG
@@ -88,6 +90,32 @@ export async function getSalesOrders(
 ): Promise<PaginatedResponse<SalesOrder>> {
   const { page = 1, pageSize = DEFAULT_PAGE_SIZE, search } = params;
 
+  // Parse salesperson codes
+  const salespersonCodes = (user?.SalesRep ?? "")
+    .split("|")
+    .map((code) => code.trim())
+    .filter(Boolean);
+
+  // Build salesperson filter
+  const salespersonFilter = salespersonCodes.length
+    ? salespersonCodes
+        .map((code) => `salespersonCode eq '${code.replace(/'/g, "''")}'`)
+        .join(" or ")
+    : "";
+
+  // Build OData filters
+  const filters: string[] = [];
+
+  if (salespersonFilter) {
+    filters.push(`(${salespersonFilter})`);
+  }
+
+  if (search?.trim()) {
+    const escapedSearch = search.trim().replace(/'/g, "''");
+
+    filters.push(`contains(bcOrderNo,'${escapedSearch}')`);
+  }
+
   const query: Record<string, string> = {
     $top: String(pageSize),
     $skip: String((page - 1) * pageSize),
@@ -95,9 +123,12 @@ export async function getSalesOrders(
     $orderby: "createdDateTime desc",
   };
 
-  if (search?.trim()) {
-    query.$filter = `contains(bcOrderNo,'${search.replace(/'/g, "''")}')`;
+  if (filters.length > 0) {
+    query.$filter = filters.join(" and ");
   }
+
+  console.log("SalesRep:", user?.SalesRep);
+  console.log("OData Filter:", query.$filter);
 
   const data = await bcGet<{
     value: any[];

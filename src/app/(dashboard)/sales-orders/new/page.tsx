@@ -563,7 +563,7 @@ export default function NewSalesOrderPage() {
     yourReference: "",
     locationCode: user?.location || "",
     paymentTermsCode: "NET30",
-    salespersonCode: "",
+    salespersonCode: user?.username || "",
     shipToName: "",
     shipToAddress: "",
     shipToCity: "",
@@ -593,7 +593,7 @@ export default function NewSalesOrderPage() {
         shipToAddress: form.customer!.address || "",
         shipToCity: form.customer!.city || "",
         shipToCountry: form.customer!.country || "",
-        salespersonCode: form.customer!.salesperson || "",
+        salespersonCode: user?.username || "",
         paymentTermsCode: f.paymentTermsCode,
       }));
     }
@@ -1262,6 +1262,7 @@ export default function NewSalesOrderPage() {
                       <Grid size={{ xs: 12, sm: 4 }}>
                         <TextField
                           fullWidth
+                          disabled
                           label="Salesperson Code"
                           value={form.salespersonCode}
                           onChange={(e) =>
