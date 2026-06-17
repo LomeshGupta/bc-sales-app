@@ -979,8 +979,7 @@ export default function NewSalesOrderPage() {
                             {customer.no} • {customer.city}
                           </Typography>
                         </Box>
-
-                        {customer.blocked && (
+                        {customer.blocked === "True" && (
                           <Chip label="Blocked" size="small" color="error" />
                         )}
                       </Box>

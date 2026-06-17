@@ -127,7 +127,7 @@ export async function getSalesOrders(
     query.$filter = filters.join(" and ");
   }
 
-  console.log("SalesRep:", user?.SalesRep);
+  console.log("SalesRep:", user);
   console.log("OData Filter:", query.$filter);
 
   const data = await bcGet<{

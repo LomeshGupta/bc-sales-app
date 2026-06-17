@@ -145,6 +145,6 @@ export function mapBCCustomer(bc: any): Customer {
 
     customerGroup: bc.type,
 
-    blocked: bc.blocked !== "" && bc.blocked !== "_x0020_",
+    blocked: bc.blocked,
   };
 }

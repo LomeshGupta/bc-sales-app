@@ -114,7 +114,7 @@ export interface Customer {
   currency: string;
   salesperson?: string;
   customerGroup?: string;
-  blocked?: boolean;
+  blocked?: string;
 }
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────

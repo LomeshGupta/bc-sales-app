@@ -21,7 +21,7 @@ async function bcGet<T>(
   const searchParams = new URLSearchParams(params);
 
   const tokenData = await getOAuthToken();
-
+  console.log(user?.ItemCat);
   const url =
     `${BC_API_BASE_URL}/${BC_TENANT_ID}/${BC_ENV_NAME}` +
     `/api/v2.0/companies(${BC_COMPANY_ID})${path}` +
@@ -55,7 +55,7 @@ export async function getItems(search?: string): Promise<BCItem[]> {
       $top: "500",
       $orderby: "displayName asc",
       $filter:
-        "displayName ne '' and blocked eq false and ItemCategoryCode eq '" +
+        "displayName ne '' and blocked eq false and itemCategoryCode eq '" +
         user?.ItemCat +
         "'",
     };
@@ -132,7 +132,7 @@ export async function getAllItems(): Promise<BCItem[]> {
       $top: "5000",
       $orderby: "displayName asc",
       $filter:
-        "displayName ne '' and blocked eq 'false' and ItemCategoryCode eq '" +
+        "displayName ne '' and blocked eq 'false' and itemCategoryCode eq '" +
         user?.ItemCat +
         "'",
     });

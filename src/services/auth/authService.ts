@@ -37,7 +37,7 @@ interface BCLoginResult {
   fullName?: string;
   Location?: string;
   SalesRep?: string;
-  itemCategoryCode?: string;
+  itemCategoryFilter?: string;
 }
 
 export async function loginUser(credentials: LoginCredentials): Promise<{
@@ -123,7 +123,7 @@ export async function loginUser(credentials: LoginCredentials): Promise<{
       role: "",
       location: result.Location,
       SalesRep: result.SalesRep,
-      ItemCat: result.itemCategoryCode,
+      ItemCat: result.itemCategoryFilter,
     };
 
     // ============================================================
