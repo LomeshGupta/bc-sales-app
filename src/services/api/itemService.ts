@@ -51,26 +51,39 @@ async function bcGet<T>(
 
 export async function getItems(search?: string): Promise<BCItem[]> {
   try {
-    const params: Record<string, string> = {
-      $top: "500",
-      $orderby: "displayName asc",
-      $filter:
-        "displayName ne '' and blocked eq false and itemCategoryCode eq '" +
-        user?.ItemCat +
-        "'",
-    };
+    const categories = (user?.ItemCat ?? "")
+      .split("|")
+      .map((c) => c.trim())
+      .filter(Boolean);
+
+    const categoryFilter =
+      categories.length > 0
+        ? `(${categories
+            .map((c) => `itemCategoryCode eq '${c}'`)
+            .join(" or ")})`
+        : "";
+
+    let filter = ["displayName ne ''", "blocked eq false", categoryFilter]
+      .filter(Boolean)
+      .join(" and ");
 
     if (search?.trim()) {
       const escapedSearch = search.replace(/'/g, "''");
 
-      params.$filter =
+      filter +=
+        ` and (` +
         `contains(displayName,'${escapedSearch}') or ` +
-        `contains(number,'${escapedSearch}')`;
+        `contains(number,'${escapedSearch}')` +
+        `)`;
     }
 
-    const data = await bcGet<{
-      value: any[];
-    }>("/items", params);
+    const params: Record<string, string> = {
+      $top: "500",
+      $orderby: "displayName asc",
+      $filter: filter,
+    };
+
+    const data = await bcGet<{ value: any[] }>("/items", params);
 
     return data.value.map(mapBCItem);
   } catch (error) {
@@ -126,21 +139,31 @@ export async function getItemById(id: string): Promise<BCItem | null> {
 
 export async function getAllItems(): Promise<BCItem[]> {
   try {
-    const data = await bcGet<{
-      value: any[];
-    }>("/items", {
+    const categories = (user?.ItemCat ?? "")
+      .split("|")
+      .map((c) => c.trim())
+      .filter(Boolean);
+
+    const categoryFilter =
+      categories.length > 0
+        ? `(${categories
+            .map((c) => `itemCategoryCode eq '${c}'`)
+            .join(" or ")})`
+        : "";
+
+    const filter = ["displayName ne ''", "blocked eq false", categoryFilter]
+      .filter(Boolean)
+      .join(" and ");
+
+    const data = await bcGet<{ value: any[] }>("/items", {
       $top: "5000",
       $orderby: "displayName asc",
-      $filter:
-        "displayName ne '' and blocked eq 'false' and itemCategoryCode eq '" +
-        user?.ItemCat +
-        "'",
+      $filter: filter,
     });
 
     return data.value.map(mapBCItem);
   } catch (error) {
     console.error("Failed to fetch all items:", error);
-
     return [];
   }
 }
