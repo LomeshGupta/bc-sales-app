@@ -7,6 +7,8 @@ import {
 
 import { BCItem } from "@/types";
 import { getOAuthToken } from "../auth/tokenService";
+import { useAuthStore } from "@/store/authStore";
+const user = useAuthStore.getState().user;
 
 // ======================================================
 // BC HELPER
@@ -52,7 +54,10 @@ export async function getItems(search?: string): Promise<BCItem[]> {
     const params: Record<string, string> = {
       $top: "500",
       $orderby: "displayName asc",
-      $filter: "displayName ne '' and blocked eq false",
+      $filter:
+        "displayName ne '' and blocked eq false and ItemCategoryCode eq '" +
+        user?.ItemCat +
+        "'",
     };
 
     if (search?.trim()) {
@@ -126,7 +131,10 @@ export async function getAllItems(): Promise<BCItem[]> {
     }>("/items", {
       $top: "5000",
       $orderby: "displayName asc",
-      $filter: "displayName ne '' and blocked eq 'false'",
+      $filter:
+        "displayName ne '' and blocked eq 'false' and ItemCategoryCode eq '" +
+        user?.ItemCat +
+        "'",
     });
 
     return data.value.map(mapBCItem);

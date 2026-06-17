@@ -13,6 +13,7 @@ export interface BCUser {
   role?: string;
   location?: string;
   SalesRep?: string;
+  ItemCat?: string;
 }
 
 export interface LoginCredentials {
