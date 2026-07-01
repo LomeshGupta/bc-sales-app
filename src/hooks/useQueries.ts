@@ -16,6 +16,7 @@ import {
   getCustomerById,
 } from "@/services/api/customerService";
 import { getItems } from "@/services/api/itemService";
+import { getLocations } from "@/services/api/locationService";
 import { getReports, generateReport } from "@/services/api/reportService";
 import { CreateSalesOrderPayload, PaginationParams } from "@/types";
 import { useAppStore } from "@/store/appStore";
@@ -32,6 +33,7 @@ export const QUERY_KEYS = {
   ALL_CUSTOMERS: ["customers", "all"],
   CUSTOMER: (id: string) => ["customer", id],
   ITEMS: (search?: string) => ["items", search || ""],
+  LOCATIONS: (search?: string) => ["locations", search || ""],
   REPORTS: ["reports"],
 } as const;
 
@@ -130,6 +132,14 @@ export function useItems(search?: string) {
   return useQuery({
     queryKey: QUERY_KEYS.ITEMS(search),
     queryFn: () => getItems(search),
+    staleTime: 15 * 60_000,
+    gcTime: 30 * 60_000,
+  });
+}
+export function useLocations(search?: string) {
+  return useQuery({
+    queryKey: QUERY_KEYS.LOCATIONS(search),
+    queryFn: () => getLocations(search),
     staleTime: 15 * 60_000,
     gcTime: 30 * 60_000,
   });

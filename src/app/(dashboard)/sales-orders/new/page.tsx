@@ -52,6 +52,7 @@ import {
   useAllCustomers,
   useItems,
   useCreateSalesOrder,
+  useLocations,
 } from "@/hooks/useQueries";
 
 import {
@@ -78,6 +79,85 @@ interface BCProcessResponse {
 interface BCProcessResult {
   success: boolean;
   message: string;
+}
+
+interface SalesPriceRequest {
+  cust: string;
+  item: string;
+  qty: number;
+}
+
+interface SalesDiscountResult {
+  success: boolean;
+  "unit price": number;
+}
+
+interface BCValueResponse {
+  "@odata.context": string;
+  value: string;
+}
+
+interface SalesPriceResult {
+  success: boolean;
+  "unit price": number;
+}
+
+export async function getSalesPrice(req: SalesPriceRequest): Promise<number> {
+  const tokenData = await getOAuthToken();
+
+  const response = await fetch(
+    `${BC_API_BASE_URL}/${BC_TENANT_ID}/${BC_ENV_NAME}` +
+      `/ODataV4/Velvotix_GetSalesPrice?Company=${COMPANY_NAME}`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${tokenData.access_token}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(req),
+    },
+  );
+
+  if (!response.ok) throw new Error("Unable to fetch sales price");
+
+  const data: BCValueResponse = await response.json();
+
+  const result: SalesPriceResult = JSON.parse(data.value);
+
+  if (!result.success) {
+    throw new Error("Unable to fetch sales price");
+  }
+
+  return result["unit price"];
+}
+
+export async function getSalesDiscount(
+  req: SalesPriceRequest,
+): Promise<number> {
+  const tokenData = await getOAuthToken();
+
+  const response = await fetch(
+    `${BC_API_BASE_URL}/${BC_TENANT_ID}/${BC_ENV_NAME}` +
+      `/ODataV4/Velvotix_GetSalesDiscount?Company=${COMPANY_NAME}`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${tokenData.access_token}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(req),
+    },
+  );
+
+  if (!response.ok) throw new Error("Unable to fetch discount");
+
+  const data: BCValueResponse = await response.json();
+
+  const result: SalesDiscountResult = JSON.parse(data.value);
+
+  return result["unit price"];
 }
 
 export async function processSalesOrders(): Promise<BCProcessResult> {
@@ -142,7 +222,7 @@ const PAYMENT_TERMS = [
   "2/10 NET30",
   "IMMEDIATE",
 ];
-const LOCATIONS = ["MAIN", "EAST", "WEST", "NORTH", "SOUTH"];
+// const LOCATIONS = ["MAIN", "EAST", "WEST", "NORTH", "SOUTH"];
 
 // ─── Line Item Row ────────────────────────────────────────────────────────────
 function LineItemRow({
@@ -150,12 +230,14 @@ function LineItemRow({
   items,
   onUpdate,
   onRemove,
+  onFetchPricing,
   index,
 }: {
   line: OrderLine;
   items: BCItem[];
   onUpdate: (key: string, updates: Partial<OrderLine>) => void;
   onRemove: (key: string) => void;
+  onFetchPricing: (key: string, itemNo: string, qty: number) => Promise<void>;
   index: number;
 }) {
   const theme = useTheme();
@@ -193,18 +275,17 @@ function LineItemRow({
           value={line.item || null}
           // inputValue={itemSearch}
           // onInputChange={(_, v) => setItemSearch(v)}
-          onChange={(_, item) => {
-            if (item) {
-              onUpdate(line._key, {
-                item,
-                itemNo: item.no,
-                description: item.description,
-                unitPrice: item.unitPrice,
-                unitOfMeasureCode: item.unitOfMeasureCode,
-                total: item.unitPrice * line.quantity,
-              });
-              // setItemSearch(item.description);
-            }
+          onChange={async (_, item) => {
+            if (!item) return;
+
+            onUpdate(line._key, {
+              item,
+              itemNo: item.no,
+              description: item.description,
+              unitOfMeasureCode: item.unitOfMeasureCode,
+            });
+
+            await onFetchPricing(line._key, item.no, line.quantity);
           }}
           renderOption={(props, option) => {
             const { key, ...optionProps } = props;
@@ -360,8 +441,10 @@ function MobileLineCard({
   items,
   onUpdate,
   onRemove,
+  onFetchPricing,
   index,
 }: {
+  onFetchPricing: (key: string, itemNo: string, qty: number) => Promise<void>;
   line: OrderLine;
   items: BCItem[];
   onUpdate: (k: string, u: Partial<OrderLine>) => void;
@@ -430,18 +513,17 @@ function MobileLineCard({
                   options={items}
                   getOptionLabel={(o) => `${o.no} – ${o.description}`}
                   value={line.item || null}
-                  onChange={(_, item) => {
-                    if (item) {
-                      const total = item.unitPrice * line.quantity;
-                      onUpdate(line._key, {
-                        item,
-                        itemNo: item.no,
-                        description: item.description,
-                        unitPrice: item.unitPrice,
-                        unitOfMeasureCode: item.unitOfMeasureCode,
-                        total,
-                      });
-                    }
+                  onChange={async (_, item) => {
+                    if (!item) return;
+
+                    onUpdate(line._key, {
+                      item,
+                      itemNo: item.no,
+                      description: item.description,
+                      unitOfMeasureCode: item.unitOfMeasureCode,
+                    });
+
+                    await onFetchPricing(line._key, item.no, line.quantity);
                   }}
                   renderInput={(p) => <TextField {...p} label="Item" />}
                 />
@@ -471,6 +553,7 @@ function MobileLineCard({
                   size="small"
                   fullWidth
                   label="Unit Price"
+                  disabled
                   type="number"
                   value={line.unitPrice}
                   onChange={(e) => {
@@ -486,7 +569,7 @@ function MobileLineCard({
                   slotProps={{
                     input: {
                       startAdornment: (
-                        <InputAdornment position="start">$</InputAdornment>
+                        <InputAdornment position="start">₹</InputAdornment>
                       ),
                     },
                   }}
@@ -496,6 +579,7 @@ function MobileLineCard({
                 <TextField
                   size="small"
                   fullWidth
+                  disabled
                   label="Discount %"
                   type="number"
                   value={line.discountPercent || 0}
@@ -551,9 +635,60 @@ export default function NewSalesOrderPage() {
   const { data: customers = [], isLoading: customersLoading } =
     useAllCustomers();
   const { data: items = [], isLoading: itemsLoading } = useItems();
+  const { data: LOCATIONS = [], isLoading: locationsLoading } = useLocations();
   const { mutate: submitOrder, isPending: submitting } = useCreateSalesOrder();
 
   const today = new Date().toISOString().split("T")[0];
+  const handleItemSelected = async (
+    key: string,
+    item: BCItem,
+    quantity: number,
+  ) => {
+    const payload = {
+      cust: form.customer?.no ?? "",
+      item: item.no,
+      qty: quantity,
+    };
+
+    const [price, discount] = await Promise.all([
+      getSalesPrice(payload),
+      getSalesDiscount(payload),
+    ]);
+
+    updateLine(key, {
+      item,
+      itemNo: item.no,
+      description: item.description,
+      unitOfMeasureCode: item.unitOfMeasureCode,
+      unitPrice: price,
+      discountPercent: discount,
+      total: quantity * price * (1 - discount / 100),
+    });
+  };
+
+  const handleQuantityChanged = async (
+    key: string,
+    itemNo: string,
+    quantity: number,
+  ) => {
+    const payload = {
+      cust: form.customer?.no ?? "",
+      item: itemNo,
+      qty: quantity,
+    };
+
+    const [price, discount] = await Promise.all([
+      getSalesPrice(payload),
+      getSalesDiscount(payload),
+    ]);
+
+    updateLine(key, {
+      quantity,
+      unitPrice: price,
+      discountPercent: discount,
+      total: quantity * price * (1 - discount / 100),
+    });
+  };
 
   const [form, setForm] = useState<OrderForm>({
     customer: null,
@@ -629,6 +764,35 @@ export default function NewSalesOrderPage() {
   const removeLine = useCallback((key: string) => {
     setLines((ls) => ls.filter((l) => l._key !== key));
   }, []);
+
+  const updatePriceAndDiscount = async (
+    key: string,
+    itemNo: string,
+    quantity: number,
+  ) => {
+    if (!form.customer) return;
+
+    try {
+      const payload = {
+        cust: form.customer.no,
+        item: itemNo,
+        qty: quantity,
+      };
+
+      const [price, discount] = await Promise.all([
+        getSalesPrice(payload),
+        getSalesDiscount(payload),
+      ]);
+
+      updateLine(key, {
+        unitPrice: price,
+        discountPercent: discount,
+        total: quantity * price * (1 - discount / 100),
+      });
+    } catch (err) {
+      console.error("Pricing error", err);
+    }
+  };
 
   const subtotal = lines.reduce((s, l) => s + l.total, 0);
   const totalDiscount = lines.reduce(
@@ -1246,15 +1410,23 @@ export default function NewSalesOrderPage() {
                       </Grid>
                       <Grid size={{ xs: 12, sm: 4 }}>
                         <Autocomplete
-                          freeSolo
                           options={LOCATIONS}
-                          value={form.locationCode}
-                          onInputChange={(_, v) =>
-                            updateForm("locationCode", v)
+                          value={
+                            LOCATIONS.find(
+                              (loc) => loc.code === form.locationCode,
+                            ) ?? null
                           }
-                          disabled
+                          getOptionLabel={(option) =>
+                            `${option.code} - ${option.displayName}`
+                          }
+                          isOptionEqualToValue={(option, value) =>
+                            option.code === value.code
+                          }
+                          onChange={(_, value) =>
+                            updateForm("locationCode", value?.code ?? "")
+                          }
                           renderInput={(params) => (
-                            <TextField {...params} label="Location Code" />
+                            <TextField {...params} label="Location" />
                           )}
                         />
                       </Grid>
@@ -1453,6 +1625,7 @@ export default function NewSalesOrderPage() {
                               items={items}
                               onUpdate={updateLine}
                               onRemove={removeLine}
+                              onFetchPricing={updatePriceAndDiscount}
                               index={idx}
                             />
                           ))}
@@ -1471,6 +1644,7 @@ export default function NewSalesOrderPage() {
                           items={items}
                           onUpdate={updateLine}
                           onRemove={removeLine}
+                          onFetchPricing={updatePriceAndDiscount}
                           index={idx}
                         />
                       ))}

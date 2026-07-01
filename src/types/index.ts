@@ -99,6 +99,23 @@ export interface BCItem {
   type?: string;
 }
 
+export interface BCLocation {
+  id: string;
+  code: string;
+  displayName: string;
+  contact: string;
+  addressLine1: string;
+  addressLine2: string;
+  city: string;
+  state: string;
+  country: string;
+  postalCode: string;
+  phoneNumber: string;
+  email: string;
+  website: string;
+  lastModifiedDateTime: string;
+}
+
 // ─── Customers ────────────────────────────────────────────────────────────────
 export interface Customer {
   id: string;
