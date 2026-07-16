@@ -78,7 +78,6 @@ export async function getItems(search?: string): Promise<BCItem[]> {
     }
 
     const params: Record<string, string> = {
-      $top: "500",
       $orderby: "displayName asc",
       $filter: filter,
     };
@@ -156,7 +155,6 @@ export async function getAllItems(): Promise<BCItem[]> {
       .join(" and ");
 
     const data = await bcGet<{ value: any[] }>("/items", {
-      $top: "5000",
       $orderby: "displayName asc",
       $filter: filter,
     });
