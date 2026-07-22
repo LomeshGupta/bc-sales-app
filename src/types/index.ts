@@ -99,6 +99,12 @@ export interface BCItem {
   type?: string;
 }
 
+export interface BCPaymentTerm {
+  id: string;
+  no: string;
+  description: string;
+}
+
 export interface BCLocation {
   id: string;
   code: string;

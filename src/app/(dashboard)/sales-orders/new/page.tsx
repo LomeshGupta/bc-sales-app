@@ -53,6 +53,7 @@ import {
   useItems,
   useCreateSalesOrder,
   useLocations,
+  usePaymentTerms,
 } from "@/hooks/useQueries";
 
 import {
@@ -64,7 +65,7 @@ import {
 } from "@/constants";
 
 const MotionTableRow = motion(TableRow);
-import { Customer, BCItem, CreateSalesOrderLine } from "@/types";
+import { Customer, BCItem, CreateSalesOrderLine, BCPaymentTerm } from "@/types";
 import { formatCurrency, getInitials, stringToColor } from "@/utils";
 import { ROUTES } from "@/constants";
 import { alpha } from "@mui/material/styles";
@@ -214,14 +215,7 @@ interface OrderForm {
 }
 
 const STEPS = ["Customer", "Order Info", "Line Items", "Review"];
-const PAYMENT_TERMS = [
-  "NET30",
-  "NET15",
-  "NET60",
-  "COD",
-  "2/10 NET30",
-  "IMMEDIATE",
-];
+
 // const LOCATIONS = ["MAIN", "EAST", "WEST", "NORTH", "SOUTH"];
 
 // ─── Line Item Row ────────────────────────────────────────────────────────────
@@ -634,6 +628,10 @@ export default function NewSalesOrderPage() {
 
   const { data: customers = [], isLoading: customersLoading } =
     useAllCustomers();
+
+  const { data: paymentTerms = [], isLoading: paymentTermsLoading } =
+    usePaymentTerms();
+
   const { data: items = [], isLoading: itemsLoading } = useItems();
   const { data: LOCATIONS = [], isLoading: locationsLoading } = useLocations();
   const { mutate: submitOrder, isPending: submitting } = useCreateSalesOrder();
@@ -1397,14 +1395,38 @@ export default function NewSalesOrderPage() {
                       </Grid>
                       <Grid size={{ xs: 12, sm: 4 }}>
                         <Autocomplete
-                          freeSolo
-                          options={PAYMENT_TERMS}
-                          value={form.paymentTermsCode}
-                          onInputChange={(_, v) =>
-                            updateForm("paymentTermsCode", v)
+                          options={paymentTerms}
+                          loading={paymentTermsLoading}
+                          value={
+                            paymentTerms.find(
+                              (p) => p.no === form.paymentTermsCode,
+                            ) ?? null
+                          }
+                          getOptionLabel={(option) =>
+                            `${option.no} - ${option.description}`
+                          }
+                          isOptionEqualToValue={(option, value) =>
+                            option.no === value.no
+                          }
+                          onChange={(_, value) =>
+                            updateForm("paymentTermsCode", value?.no ?? "")
                           }
                           renderInput={(params) => (
-                            <TextField {...params} label="Payment Terms" />
+                            <TextField
+                              {...params}
+                              label="Payment Terms"
+                              InputProps={{
+                                ...params.InputProps,
+                                endAdornment: (
+                                  <>
+                                    {paymentTermsLoading && (
+                                      <CircularProgress size={20} />
+                                    )}
+                                    {params.InputProps.endAdornment}
+                                  </>
+                                ),
+                              }}
+                            />
                           )}
                         />
                       </Grid>

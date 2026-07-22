@@ -16,6 +16,7 @@ import {
   getCustomerById,
 } from "@/services/api/customerService";
 import { getItems } from "@/services/api/itemService";
+import { getAllpaymentTerms } from "@/services/api/paymentTerms";
 import { getLocations } from "@/services/api/locationService";
 import { getReports, generateReport } from "@/services/api/reportService";
 import { CreateSalesOrderPayload, PaginationParams } from "@/types";
@@ -136,6 +137,14 @@ export function useItems(search?: string) {
     gcTime: 30 * 60_000,
   });
 }
+
+export const usePaymentTerms = () => {
+  return useQuery({
+    queryKey: ["paymentTerms"],
+    queryFn: getAllpaymentTerms,
+  });
+};
+
 export function useLocations(search?: string) {
   return useQuery({
     queryKey: QUERY_KEYS.LOCATIONS(search),
