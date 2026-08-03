@@ -153,10 +153,9 @@ export interface KPICard {
 }
 
 export interface SalesSummary {
-  period: string;
+  postingDate: number;
+  postingYear: number;
   amount: number;
-  orders: number;
-  customers: number;
 }
 
 export interface RecentActivity {

@@ -1,15 +1,17 @@
 import { KPICard, SalesSummary, RecentActivity } from "@/types";
 import {
   BC_TENANT_ID,
-  BC_COMPANY_ID,
   BC_API_BASE_URL,
   BC_ENV_NAME,
+  COMPANY_NAME,
+  BC_COMPANY_ID,
 } from "@/constants";
 
 import { getOAuthToken } from "../auth/tokenService";
+import { useAuthStore } from "@/store/authStore";
 
 /* -------------------------------------------------------------------------- */
-/*                                API HELPER                                   */
+/*                                API HELPER                                  */
 /* -------------------------------------------------------------------------- */
 
 async function bcGet<T>(
@@ -48,12 +50,51 @@ async function bcGet<T>(
   return res.json();
 }
 
+async function bcPost<T>(
+  path: string,
+  body: Record<string, unknown> = {},
+): Promise<T> {
+  const tokenData = await getOAuthToken();
+  const user = useAuthStore.getState().user;
+
+  let url =
+    `${BC_API_BASE_URL}/${BC_TENANT_ID}/${BC_ENV_NAME}` +
+    `/ODataV4/Velvotix_GetKPIs?Company=${COMPANY_NAME}`;
+
+  if (path) {
+    url += `/${path}`;
+  }
+
+  console.log("Calling BC API:", url);
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${tokenData.access_token}`,
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      Prefer: "odata.include-annotations=*",
+    },
+    body: JSON.stringify({
+      salespersonCode: user?.userId ?? "",
+      ...body,
+    }),
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Business Central API Error ${res.status}: ${errorText}`);
+  }
+
+  return res.json();
+}
+
 /* -------------------------------------------------------------------------- */
 /*                                   KPIs                                     */
 /* -------------------------------------------------------------------------- */
 
 interface BCKPI {
-  id: string;
   title: string;
   value: string;
   trend: number;
@@ -62,13 +103,15 @@ interface BCKPI {
 
 export async function getDashboardKPIs(): Promise<KPICard[]> {
   try {
-    const data = await bcGet<{ value: BCKPI[] }>("dashboardKPIs");
+    const data = await bcPost<{ value: string }>("");
 
-    return data.value.map((item) => {
-      const numericValue = Number(String(item.value).replace(/,/g, ""));
+    const kpis: BCKPI[] = JSON.parse(data.value);
+
+    return kpis.map((item, index) => {
+      const numericValue = Number(item.value.replace(/,/g, ""));
 
       return {
-        id: item.id,
+        id: index.toString(),
         title: item.title,
         value: numericValue,
 
@@ -118,12 +161,9 @@ export async function getSalesSummary(): Promise<SalesSummary[]> {
     const data = await bcGet<{ value: BCSalesSummary[] }>("salesSummary");
 
     return data.value.map((item) => ({
-      period: item.postingYear.toString(),
+      postingDate: item.postingDate,
+      postingYear: item.postingYear,
       amount: item.totalSales,
-
-      // Not currently returned by BC endpoint
-      orders: 0,
-      customers: 0,
     }));
   } catch (error) {
     console.error("Failed to fetch Sales Summary:", error);
