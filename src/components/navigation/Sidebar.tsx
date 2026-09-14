@@ -1,5 +1,6 @@
 "use client";
-import React from "react";
+
+import React, { useEffect, useState } from "react";
 import {
   Drawer,
   List,
@@ -28,20 +29,9 @@ import { useAuthStore } from "@/store/authStore";
 import { useAppStore } from "@/store/appStore";
 import { ROUTES, APP_NAME } from "@/constants";
 import { getInitials, stringToColor } from "@/utils";
+import { getDashboardKPIs } from "@/services/api/dashboardService";
 
 const DRAWER_WIDTH = 240;
-
-const NAV_ITEMS = [
-  { label: "Dashboard", path: ROUTES.DASHBOARD, icon: Dashboard, badge: null },
-  {
-    label: "Sales Orders",
-    path: ROUTES.SALES_ORDERS,
-    icon: ShoppingCart,
-    badge: "47",
-  },
-  { label: "Customers", path: ROUTES.CUSTOMERS, icon: PeopleAlt, badge: null },
-  { label: "Reports", path: ROUTES.REPORTS, icon: Assessment, badge: null },
-];
 
 export function Sidebar() {
   const router = useRouter();
@@ -49,11 +39,56 @@ export function Sidebar() {
   const { user, logout } = useAuthStore();
   const { showSnackbar } = useAppStore();
 
+  const [openOrders, setOpenOrders] = useState<number | null>(null);
+
+  useEffect(() => {
+    const loadOpenOrders = async () => {
+      try {
+        const kpis = await getDashboardKPIs();
+
+        const openOrdersKPI = kpis.find((kpi) => kpi.title === "Open Orders");
+
+        setOpenOrders(openOrdersKPI ? Number(openOrdersKPI.value) : null);
+      } catch (error) {
+        console.error("Failed to load open orders:", error);
+      }
+    };
+
+    loadOpenOrders();
+  }, []);
+
   const handleLogout = () => {
     logout();
     showSnackbar("Logged out successfully", "success");
     router.replace(ROUTES.LOGIN);
   };
+
+  const NAV_ITEMS = [
+    {
+      label: "Dashboard",
+      path: ROUTES.DASHBOARD,
+      icon: Dashboard,
+      badge: null,
+    },
+    {
+      label: "Sales Orders",
+      path: ROUTES.SALES_ORDERS,
+      icon: ShoppingCart,
+      badge: openOrders,
+    },
+    {
+      label: "Customers",
+      path: ROUTES.CUSTOMERS,
+      icon: PeopleAlt,
+      badge: null,
+    },
+    {
+      label: "Reports",
+      path: ROUTES.REPORTS,
+      icon: Assessment,
+      badge: null,
+    },
+  ];
 
   return (
     <Drawer
@@ -72,7 +107,13 @@ export function Sidebar() {
       }}
     >
       <Box
-        sx={{ px: 2.5, py: 3, display: "flex", alignItems: "center", gap: 1.5 }}
+        sx={{
+          px: 2.5,
+          py: 3,
+          display: "flex",
+          alignItems: "center",
+          gap: 1.5,
+        }}
       >
         <Box
           sx={{
@@ -88,11 +129,16 @@ export function Sidebar() {
         >
           <Typography
             variant="caption"
-            sx={{ color: "white", fontWeight: 800, fontSize: "1.9rem" }}
+            sx={{
+              color: "white",
+              fontWeight: 800,
+              fontSize: "1.9rem",
+            }}
           >
             S
           </Typography>
         </Box>
+
         <Box>
           <Typography
             variant="subtitle1"
@@ -100,6 +146,7 @@ export function Sidebar() {
           >
             {APP_NAME}
           </Typography>
+
           <Typography
             variant="caption"
             color="text.secondary"
@@ -116,6 +163,7 @@ export function Sidebar() {
         {NAV_ITEMS.map((item, idx) => {
           const Icon = item.icon;
           const isActive = pathname.startsWith(item.path);
+
           return (
             <motion.div
               key={item.path}
@@ -127,7 +175,10 @@ export function Sidebar() {
                 <ListItemButton
                   onClick={() => router.push(item.path)}
                   selected={isActive}
-                  sx={{ borderRadius: 2, px: 1.5 }}
+                  sx={{
+                    borderRadius: 2,
+                    px: 1.5,
+                  }}
                 >
                   <ListItemIcon sx={{ minWidth: 36 }}>
                     <Icon
@@ -137,6 +188,7 @@ export function Sidebar() {
                       }}
                     />
                   </ListItemIcon>
+
                   <ListItemText
                     primary={item.label}
                     slotProps={{
@@ -149,7 +201,8 @@ export function Sidebar() {
                       },
                     }}
                   />
-                  {item.badge && (
+
+                  {item.badge !== null && (
                     <Chip
                       label={item.badge}
                       size="small"
@@ -172,7 +225,14 @@ export function Sidebar() {
       <Divider sx={{ opacity: 0.5 }} />
 
       <Box sx={{ p: 2 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.5 }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1.5,
+            mb: 1.5,
+          }}
+        >
           <Avatar
             sx={{
               width: 36,
@@ -184,32 +244,50 @@ export function Sidebar() {
           >
             {getInitials(user?.displayName || user?.username || "U")}
           </Avatar>
+
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>
               {user?.displayName || user?.username}
             </Typography>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 0.5,
+              }}
+            >
               <Circle sx={{ fontSize: 6, color: "#4CAF50" }} />
+
               <Typography variant="caption" color="text.secondary">
                 Active
               </Typography>
             </Box>
           </Box>
         </Box>
+
         <Tooltip title="Logout">
           <ListItemButton
             onClick={handleLogout}
-            sx={{ borderRadius: 2, px: 1.5, color: "error.main" }}
+            sx={{
+              borderRadius: 2,
+              px: 1.5,
+              color: "error.main",
+            }}
           >
             <ListItemIcon sx={{ minWidth: 36 }}>
               <Logout fontSize="small" color="error" />
             </ListItemIcon>
+
             <ListItemText
               primary="Logout"
               slotProps={{
                 primary: {
                   variant: "body2",
-                  sx: { fontWeight: 500, color: "error.main" },
+                  sx: {
+                    fontWeight: 500,
+                    color: "error.main",
+                  },
                 },
               }}
             />

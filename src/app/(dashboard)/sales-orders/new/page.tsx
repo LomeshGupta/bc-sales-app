@@ -694,8 +694,8 @@ export default function NewSalesOrderPage() {
     requestedDeliveryDate: "",
     externalDocumentNo: "",
     yourReference: "",
-    locationCode: user?.location || "",
-    paymentTermsCode: "NET30",
+    locationCode: "",
+    paymentTermsCode: "",
     salespersonCode: user?.username || "",
     shipToName: "",
     shipToAddress: "",
@@ -802,28 +802,69 @@ export default function NewSalesOrderPage() {
   // ── Validation ──────────────────────────────────────────────────────────────
   const validate = (currentStep: number): boolean => {
     const errs: Record<string, string> = {};
+
     if (currentStep === 0) {
-      if (!form.customer) errs.customer = "Please select a customer";
+      if (!form.customer) {
+        errs.customer = "Please select a customer";
+      }
     }
+
     if (currentStep === 1) {
-      if (!form.orderDate) errs.orderDate = "Order date is required";
+      // Order Date
+      if (!form.orderDate?.trim()) {
+        errs.orderDate = "Order date is required";
+      }
+
+      // Payment Terms - MUST have a valid selected code
+      const paymentTermCode = form.paymentTermsCode?.trim();
+      console.log(form.paymentTermsCode);
+      if (
+        !paymentTermCode ||
+        !paymentTerms.some((p) => p.no === paymentTermCode)
+      ) {
+        errs.paymentTermsCode = "Please select Payment Terms";
+      }
+
+      // Location - MUST have a valid selected location
+      const locationCode = form.locationCode?.trim();
+
+      if (
+        !locationCode ||
+        !LOCATIONS.some((loc) => loc.code === locationCode)
+      ) {
+        errs.locationCode = "Please select Location";
+      }
     }
+
     if (currentStep === 2) {
-      if (validLines.length === 0)
+      if (validLines.length === 0) {
         errs.lines = "At least one line item is required";
+      }
+
       lines.forEach((l, i) => {
-        if (l.itemNo && l.quantity <= 0)
+        if (l.itemNo && l.quantity <= 0) {
           errs[`line_${i}`] = "Quantity must be > 0";
-        if (l.itemNo && l.unitPrice <= 0)
+        }
+
+        if (l.itemNo && l.unitPrice <= 0) {
           errs[`price_${i}`] = "Price must be > 0";
+        }
       });
     }
+
     setErrors(errs);
+
     return Object.keys(errs).length === 0;
   };
 
   const handleNext = () => {
-    if (validate(step)) setStep((s) => s + 1);
+    const isValid = validate(step);
+
+    if (!isValid) {
+      return;
+    }
+
+    setStep((s) => s + 1);
   };
 
   const handleBack = () => {
@@ -943,8 +984,8 @@ export default function NewSalesOrderPage() {
                   requestedDeliveryDate: "",
                   externalDocumentNo: "",
                   yourReference: "",
-                  locationCode: "MAIN",
-                  paymentTermsCode: "NET30",
+                  locationCode: "",
+                  paymentTermsCode: "",
                   salespersonCode: "",
                   shipToName: "",
                   shipToAddress: "",
@@ -1414,7 +1455,9 @@ export default function NewSalesOrderPage() {
                           renderInput={(params) => (
                             <TextField
                               {...params}
-                              label="Payment Terms"
+                              label="Payment Terms *"
+                              error={!!errors.paymentTermsCode}
+                              helperText={errors.paymentTermsCode}
                               InputProps={{
                                 ...params.InputProps,
                                 endAdornment: (
@@ -1448,7 +1491,12 @@ export default function NewSalesOrderPage() {
                             updateForm("locationCode", value?.code ?? "")
                           }
                           renderInput={(params) => (
-                            <TextField {...params} label="Location" />
+                            <TextField
+                              {...params}
+                              label="Location *"
+                              error={!!errors.locationCode}
+                              helperText={errors.locationCode}
+                            />
                           )}
                         />
                       </Grid>
