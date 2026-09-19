@@ -146,5 +146,6 @@ export function mapBCCustomer(bc: any): Customer {
     customerGroup: bc.type,
 
     blocked: bc.blocked,
+    locationCode: bc.locationCode,
   };
 }

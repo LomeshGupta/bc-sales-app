@@ -97,6 +97,7 @@ export interface BCItem {
   inventory: number;
   itemCategoryCode?: string;
   type?: string;
+  blocked?: boolean;
 }
 
 export interface BCPaymentTerm {
@@ -138,6 +139,7 @@ export interface Customer {
   salesperson?: string;
   customerGroup?: string;
   blocked?: string;
+  locationCode?: string;
 }
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────

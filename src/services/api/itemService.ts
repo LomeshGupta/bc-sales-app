@@ -187,5 +187,7 @@ export function mapBCItem(bc: any): BCItem {
     itemCategoryCode: bc.itemCategoryCode,
 
     type: bc.type,
+
+    blocked: bc.blocked,
   };
 }

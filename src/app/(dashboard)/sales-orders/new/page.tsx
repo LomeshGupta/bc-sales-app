@@ -728,6 +728,7 @@ export default function NewSalesOrderPage() {
         shipToCountry: form.customer!.country || "",
         salespersonCode: user?.username || "",
         paymentTermsCode: f.paymentTermsCode,
+        locationCode: form.customer!.locationCode || "",
       }));
     }
   }, [form.customer]);
@@ -798,56 +799,64 @@ export default function NewSalesOrderPage() {
     0,
   );
   const validLines = lines.filter((l) => l.itemNo);
+  const selectedPaymentTerm =
+    paymentTerms.find((p) => p.no === form.paymentTermsCode) ?? null;
+
+  const selectedLocation =
+    LOCATIONS.find((loc) => loc.code === form.locationCode) ?? null;
 
   // ── Validation ──────────────────────────────────────────────────────────────
   const validate = (currentStep: number): boolean => {
     const errs: Record<string, string> = {};
 
+    // ─────────────────────────────────────────────────────────────
+    // STEP 0 - CUSTOMER
+    // ─────────────────────────────────────────────────────────────
     if (currentStep === 0) {
       if (!form.customer) {
         errs.customer = "Please select a customer";
       }
     }
 
+    // ─────────────────────────────────────────────────────────────
+    // STEP 1 - ORDER INFO
+    // ─────────────────────────────────────────────────────────────
     if (currentStep === 1) {
       // Order Date
-      if (!form.orderDate?.trim()) {
+      if (!form.orderDate || !form.orderDate.trim()) {
         errs.orderDate = "Order date is required";
       }
 
-      // Payment Terms - MUST have a valid selected code
-      const paymentTermCode = form.paymentTermsCode?.trim();
-      console.log(form.paymentTermsCode);
-      if (
-        !paymentTermCode ||
-        !paymentTerms.some((p) => p.no === paymentTermCode)
-      ) {
+      // Payment Terms
+      if (paymentTermsLoading) {
+        errs.paymentTermsCode = "Payment Terms are still loading";
+      } else if (!selectedPaymentTerm) {
         errs.paymentTermsCode = "Please select Payment Terms";
       }
 
-      // Location - MUST have a valid selected location
-      const locationCode = form.locationCode?.trim();
-
-      if (
-        !locationCode ||
-        !LOCATIONS.some((loc) => loc.code === locationCode)
-      ) {
+      // Location
+      if (locationsLoading) {
+        errs.locationCode = "Locations are still loading";
+      } else if (!selectedLocation) {
         errs.locationCode = "Please select Location";
       }
     }
 
+    // ─────────────────────────────────────────────────────────────
+    // STEP 2 - LINE ITEMS
+    // ─────────────────────────────────────────────────────────────
     if (currentStep === 2) {
       if (validLines.length === 0) {
         errs.lines = "At least one line item is required";
       }
 
-      lines.forEach((l, i) => {
-        if (l.itemNo && l.quantity <= 0) {
-          errs[`line_${i}`] = "Quantity must be > 0";
+      lines.forEach((line, index) => {
+        if (line.itemNo && line.quantity <= 0) {
+          errs[`line_${index}`] = "Quantity must be > 0";
         }
 
-        if (l.itemNo && l.unitPrice <= 0) {
-          errs[`price_${i}`] = "Price must be > 0";
+        if (line.itemNo && line.unitPrice <= 0) {
+          errs[`price_${index}`] = "Price must be > 0";
         }
       });
     }
@@ -858,13 +867,35 @@ export default function NewSalesOrderPage() {
   };
 
   const handleNext = () => {
-    const isValid = validate(step);
-
-    if (!isValid) {
+    // Always validate the current step first
+    console.log(selectedPaymentTerm, selectedLocation);
+    if (!validate(step)) {
       return;
     }
 
-    setStep((s) => s + 1);
+    // Extra hard validation for Order Info
+    if (step === 1) {
+      if (!selectedPaymentTerm) {
+        setErrors((prev) => ({
+          ...prev,
+          paymentTermsCode: "Please select Payment Terms",
+        }));
+
+        return;
+      }
+
+      if (!selectedLocation) {
+        setErrors((prev) => ({
+          ...prev,
+          locationCode: "Please select Location",
+        }));
+
+        return;
+      }
+    }
+
+    setErrors({});
+    setStep((currentStep) => currentStep + 1);
   };
 
   const handleBack = () => {
@@ -1126,6 +1157,7 @@ export default function NewSalesOrderPage() {
                   value={form.customer}
                   onChange={(_, customer) => {
                     updateForm("customer", customer);
+                    updateForm("locationCode", customer?.locationCode ?? "");
                   }}
                   isOptionEqualToValue={(option, value) =>
                     option.id === value?.id
@@ -1434,6 +1466,7 @@ export default function NewSalesOrderPage() {
                           }
                         />
                       </Grid>
+
                       <Grid size={{ xs: 12, sm: 4 }}>
                         <Autocomplete
                           options={paymentTerms}
@@ -1449,15 +1482,33 @@ export default function NewSalesOrderPage() {
                           isOptionEqualToValue={(option, value) =>
                             option.no === value.no
                           }
-                          onChange={(_, value) =>
-                            updateForm("paymentTermsCode", value?.no ?? "")
-                          }
+                          onChange={(_, value) => {
+                            const code = value?.no ?? "";
+
+                            updateForm("paymentTermsCode", code);
+
+                            setErrors((prev) => {
+                              const next = { ...prev };
+                              delete next.paymentTermsCode;
+                              return next;
+                            });
+                          }}
+                          disableClearable={false}
                           renderInput={(params) => (
                             <TextField
                               {...params}
+                              required
                               label="Payment Terms *"
+                              placeholder={
+                                paymentTermsLoading
+                                  ? "Loading payment terms..."
+                                  : "Select payment terms"
+                              }
                               error={!!errors.paymentTermsCode}
-                              helperText={errors.paymentTermsCode}
+                              helperText={
+                                errors.paymentTermsCode ||
+                                "Payment Terms selection is required"
+                              }
                               InputProps={{
                                 ...params.InputProps,
                                 endAdornment: (
@@ -1473,9 +1524,11 @@ export default function NewSalesOrderPage() {
                           )}
                         />
                       </Grid>
+
                       <Grid size={{ xs: 12, sm: 4 }}>
                         <Autocomplete
                           options={LOCATIONS}
+                          loading={locationsLoading}
                           value={
                             LOCATIONS.find(
                               (loc) => loc.code === form.locationCode,
@@ -1487,15 +1540,44 @@ export default function NewSalesOrderPage() {
                           isOptionEqualToValue={(option, value) =>
                             option.code === value.code
                           }
-                          onChange={(_, value) =>
-                            updateForm("locationCode", value?.code ?? "")
-                          }
+                          onChange={(_, value) => {
+                            const code = value?.code ?? "";
+
+                            updateForm("locationCode", code);
+
+                            setErrors((prev) => {
+                              const next = { ...prev };
+                              delete next.locationCode;
+                              return next;
+                            });
+                          }}
+                          disableClearable={false}
                           renderInput={(params) => (
                             <TextField
                               {...params}
+                              required
                               label="Location *"
+                              placeholder={
+                                locationsLoading
+                                  ? "Loading locations..."
+                                  : "Select location"
+                              }
                               error={!!errors.locationCode}
-                              helperText={errors.locationCode}
+                              helperText={
+                                errors.locationCode ||
+                                "Location selection is required"
+                              }
+                              InputProps={{
+                                ...params.InputProps,
+                                endAdornment: (
+                                  <>
+                                    {locationsLoading && (
+                                      <CircularProgress size={20} />
+                                    )}
+                                    {params.InputProps.endAdornment}
+                                  </>
+                                ),
+                              }}
                             />
                           )}
                         />
