@@ -20,6 +20,7 @@ import {
   ShoppingCart,
   PeopleAlt,
   Assessment,
+  Inventory2,
   Logout,
   Circle,
 } from "@mui/icons-material";
@@ -86,6 +87,12 @@ export function Sidebar() {
       label: "Reports",
       path: ROUTES.REPORTS,
       icon: Assessment,
+      badge: null,
+    },
+    {
+      label: "Inventory",
+      path: ROUTES.INVENTORY,
+      icon: Inventory2,
       badge: null,
     },
   ];

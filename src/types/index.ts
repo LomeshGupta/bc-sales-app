@@ -100,6 +100,24 @@ export interface BCItem {
   blocked?: boolean;
 }
 
+// ─── Inventory ────────────────────────────────────────────────────────────────
+export interface InventoryItem {
+  id: string;
+  no: string;
+  description: string;
+  description2?: string;
+  type?: string;
+  itemCategoryCode?: string;
+  blocked?: boolean;
+  gtin?: string;
+  unitPrice: number;
+  unitCost: number;
+  unitOfMeasureCode: string;
+  locationCode: string;
+  inventory: number;
+  lastModifiedDateTime?: string;
+}
+
 export interface BCPaymentTerm {
   id: string;
   no: string;

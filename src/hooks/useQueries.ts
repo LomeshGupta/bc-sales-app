@@ -19,6 +19,7 @@ import { getItems } from "@/services/api/itemService";
 import { getAllpaymentTerms } from "@/services/api/paymentTerms";
 import { getLocations } from "@/services/api/locationService";
 import { getReports, generateReport } from "@/services/api/reportService";
+import { getInventory, InventoryParams } from "@/services/api/inventoryService";
 import { CreateSalesOrderPayload, PaginationParams } from "@/types";
 import { useAppStore } from "@/store/appStore";
 
@@ -36,6 +37,7 @@ export const QUERY_KEYS = {
   ITEMS: (search?: string) => ["items", search || ""],
   LOCATIONS: (search?: string) => ["locations", search || ""],
   REPORTS: ["reports"],
+  INVENTORY: (params: InventoryParams) => ["inventory", params],
 } as const;
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
@@ -167,5 +169,17 @@ export function useGenerateReport() {
   return useMutation({
     mutationFn: generateReport,
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.REPORTS }),
+  });
+}
+
+
+// ─── Inventory ────────────────────────────────────────────────────────────────
+export function useInventory(params: InventoryParams = {}) {
+  return useQuery({
+    queryKey: QUERY_KEYS.INVENTORY(params),
+    queryFn: () => getInventory(params),
+    staleTime: 2 * 60_000,
+    gcTime: 10 * 60_000,
+    placeholderData: (prev) => prev,
   });
 }
