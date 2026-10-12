@@ -11,7 +11,7 @@ import { getOAuthToken } from "../auth/tokenService";
 
 import { BC_TENANT_ID, BC_ENV_NAME } from "@/constants";
 import { useAuthStore } from "@/store/authStore";
-const user = useAuthStore.getState().user;
+
 
 // ======================================================
 // CONFIG
@@ -28,6 +28,8 @@ const BC_BASE_URL =
 // HELPERS
 // ======================================================
 
+import { bcFetch } from "./bcRequest";
+
 async function bcGet<T>(
   endpoint: string,
   params: Record<string, string> = {},
@@ -43,7 +45,7 @@ async function bcGet<T>(
   });
   console.log(url);
   console.log(url.toString());
-  const response = await fetch(url.toString(), {
+  const response = await bcFetch(url.toString(), {
     method: "GET",
     headers: {
       Authorization: `Bearer ${token.access_token}`,
@@ -64,7 +66,7 @@ async function bcGet<T>(
 async function bcPost<T>(endpoint: string, body: unknown): Promise<T> {
   const token = await getOAuthToken();
 
-  const response = await fetch(`${BC_BASE_URL}/${endpoint}`, {
+  const response = await bcFetch(`${BC_BASE_URL}/${endpoint}`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token.access_token}`,
@@ -90,11 +92,16 @@ export async function getSalesOrders(
 ): Promise<PaginatedResponse<SalesOrder>> {
   const { page = 1, pageSize = DEFAULT_PAGE_SIZE, search } = params;
 
+  const user = useAuthStore.getState().user;
   // Parse salesperson codes
   const salespersonCodes = (user?.SalesRep ?? "")
     .split("|")
     .map((code) => code.trim())
     .filter(Boolean);
+
+  if (!salespersonCodes.length) {
+    return { data: [], total: 0, page, pageSize, totalPages: 0 };
+  }
 
   // Build salesperson filter
   const salespersonFilter = salespersonCodes.length
@@ -154,10 +161,14 @@ export async function getSalesOrders(
 export async function getSalesOrderById(
   systemId: string,
 ): Promise<SalesOrder | null> {
+  const user = useAuthStore.getState().user;
+  const salespersonCodes = (user?.SalesRep ?? "").split("|").map(c => c.trim()).filter(Boolean);
+  if (!salespersonCodes.length) return null;
+  const salespersonFilter = salespersonCodes.map(code => `salespersonCode eq '${code.replace(/'/g, "''")}'`).join(" or ");
   const data = await bcGet<{
     value: any[];
   }>("SOHeaderAPI", {
-    $filter: `id eq ${systemId}`,
+    $filter: `id eq ${systemId} and (${salespersonFilter})`,
   });
 
   if (!data.value.length) {
@@ -174,6 +185,8 @@ export async function getSalesOrderById(
 export async function getSalesOrderLines(
   headerSystemId: string,
 ): Promise<SalesOrderLine[]> {
+  const owner = await getSalesOrderById(headerSystemId);
+  if (!owner) return [];
   const data = await bcGet<{
     value: any[];
   }>("SOLineAPI", {
@@ -296,4 +309,25 @@ function mapStagingLine(bc: any): SalesOrderLine {
 
     type: "Item",
   };
+}
+
+/**
+ * Additive durable submission API. Existing createSalesOrder() is unchanged.
+ * Requires REDIS_URL and a worker/scheduler to process persisted jobs.
+ */
+export async function submitSalesOrderJob(payload: CreateSalesOrderPayload, idempotencyKey?: string) {
+  const key = idempotencyKey || `${payload.externalDocumentNo || ''}:${JSON.stringify(payload)}`;
+  const response = await fetch('/api/jobs/sales-order', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Idempotency-Key': key },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) throw new Error(await response.text());
+  return response.json() as Promise<{ success: boolean; status: string; jobId: string }>;
+}
+
+export async function getSalesOrderJobStatus(jobId: string) {
+  const response = await fetch(`/api/jobs/sales-order/status?jobId=${encodeURIComponent(jobId)}`, { cache: 'no-store' });
+  if (!response.ok) throw new Error(await response.text());
+  return response.json();
 }

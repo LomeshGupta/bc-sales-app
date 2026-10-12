@@ -10,7 +10,9 @@ import { InventoryItem } from "@/types";
 import { getOAuthToken } from "../auth/tokenService";
 import { useAuthStore } from "@/store/authStore";
 
-const user = useAuthStore.getState().user;
+
+
+import { bcFetch } from "./bcRequest";
 
 async function bcGet<T>(
   path: string,
@@ -24,7 +26,7 @@ async function bcGet<T>(
     `/ODataV4/company('${COMPANY_NAME}')${path}` +
     `?${searchParams.toString()}`;
 
-  const res = await fetch(url, {
+  const res = await bcFetch(url, {
     headers: {
       Authorization: `Bearer ${tokenData.access_token}`,
       Accept: "application/json",
@@ -42,6 +44,7 @@ async function bcGet<T>(
 }
 
 function buildCategoryFilter(): string {
+  const user = useAuthStore.getState().user;
   const categories = (user?.ItemCat ?? "")
     .split("|")
     .map((c) => c.trim())
@@ -63,10 +66,13 @@ export async function getInventory(
   params: InventoryParams = {},
 ): Promise<InventoryItem[]> {
   try {
+    const user = useAuthStore.getState().user;
+    if (!user?.ItemCat?.trim()) return [];
     const filters = ["displayName ne ''", "blocked eq false"];
 
     const categoryFilter = buildCategoryFilter();
-    if (categoryFilter) filters.push(categoryFilter);
+    if (!categoryFilter) return [];
+    filters.push(categoryFilter);
 
     if (params.locationCode?.trim()) {
       filters.push(
@@ -74,15 +80,42 @@ export async function getInventory(
       );
     }
 
+    const select =
+      "id,number,displayName,displayName2,type,itemCategoryCode,blocked,baseUnitOfMeasureCode,locationCode,inventory,unitCost,lastModifiedDateTime";
+
+    // Business Central OData does not support OR filters across distinct fields
+    // in this scenario. Searching displayName OR number in one $filter therefore
+    // causes the inventory query to fail. Run one query per searchable field and
+    // merge the results locally. Common security/location/category filters are
+    // applied to both requests.
     if (params.search?.trim()) {
-      const search = params.search.replace(/'/g, "''");
-      filters.push(
-        `(contains(displayName,'${search}') or contains(number,'${search}'))`,
-      );
+      const escapedSearch = params.search.trim().replace(/'/g, "''");
+      const commonFilter = filters.join(" and ");
+
+      const [byDisplayName, byNumber] = await Promise.all([
+        bcGet<{ value: any[] }>("/velvotixitems", {
+          $top: "50",
+          $select: select,
+          $filter: `${commonFilter} and contains(displayName,'${escapedSearch}')`,
+        }),
+        bcGet<{ value: any[] }>("/velvotixitems", {
+          $top: "50",
+          $select: select,
+          $filter: `${commonFilter} and contains(number,'${escapedSearch}')`,
+        }),
+      ]);
+
+      const merged = new Map<string, any>();
+      for (const row of [...byDisplayName.value, ...byNumber.value]) {
+        if (row?.id) merged.set(String(row.id), row);
+      }
+
+      return Array.from(merged.values()).map(mapInventoryItem);
     }
 
     const data = await bcGet<{ value: any[] }>("/velvotixitems", {
-      $top: "5000",
+      $top: "50",
+      $select: select,
       $filter: filters.join(" and "),
     });
 
@@ -108,6 +141,7 @@ export function mapInventoryItem(bc: any): InventoryItem {
     unitOfMeasureCode: bc.baseUnitOfMeasureCode || "PCS",
     locationCode: bc.locationCode || "",
     inventory: Number(bc.inventory || 0),
+    channel: "MAIN WAREH",
     lastModifiedDateTime: bc.lastModifiedDateTime,
   };
 }

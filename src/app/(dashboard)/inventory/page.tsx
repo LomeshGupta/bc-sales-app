@@ -1,6 +1,6 @@
  "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Box,
@@ -32,6 +32,15 @@ function formatAmount(value: number): string {
 export default function InventoryPage() {
   const [locationCode, setLocationCode] = useState("");
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedSearch(search.trim());
+    }, 400);
+
+    return () => window.clearTimeout(timer);
+  }, [search]);
 
   const {
     data: locations,
@@ -46,7 +55,7 @@ export default function InventoryPage() {
     isError,
   } = useInventory({
     locationCode: locationCode || undefined,
-    search: search.trim() || undefined,
+    search: debouncedSearch || undefined,
   });
 
   const locationOptions = useMemo(
@@ -238,6 +247,11 @@ export default function InventoryPage() {
                           size="small"
                           icon={<LocationOn />}
                           label={item.locationCode || "No location"}
+                          variant="outlined"
+                        />
+                        <Chip
+                          size="small"
+                          label={item.channel || "MAIN WAREH"}
                           variant="outlined"
                         />
                         <Chip

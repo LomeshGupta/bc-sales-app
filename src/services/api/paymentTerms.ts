@@ -8,7 +8,7 @@ import {
 import { BCPaymentTerm } from "@/types";
 import { getOAuthToken } from "../auth/tokenService";
 import { useAuthStore } from "@/store/authStore";
-const user = useAuthStore.getState().user;
+import { bcFetch } from "./bcRequest";
 
 // ======================================================
 // BC HELPER
@@ -21,13 +21,13 @@ async function bcGet<T>(
   const searchParams = new URLSearchParams(params);
 
   const tokenData = await getOAuthToken();
-  console.log(user?.ItemCat);
+
   const url =
     `${BC_API_BASE_URL}/${BC_TENANT_ID}/${BC_ENV_NAME}` +
     `/api/v2.0/companies(${BC_COMPANY_ID})${path}` +
     `?${searchParams.toString()}`;
 
-  const res = await fetch(url, {
+  const res = await bcFetch(url, {
     headers: {
       Authorization: `Bearer ${tokenData.access_token}`,
       Accept: "application/json",
@@ -46,28 +46,25 @@ async function bcGet<T>(
 }
 
 // ======================================================
-// GET paymentTerms
+// GET PAYMENT TERMS
 // ======================================================
 
 export async function getpaymentTerms(
   search?: string,
 ): Promise<BCPaymentTerm[]> {
   try {
-    const categories = (user?.ItemCat ?? "")
-      .split("|")
-      .map((c) => c.trim())
-      .filter(Boolean);
+    // IMPORTANT:
+    // Get the current user at request time.
+    // Do NOT define this at module level.
+    const user = useAuthStore.getState().user;
 
-    const categoryFilter =
-      categories.length > 0
-        ? `(${categories
-            .map((c) => `itemCategoryCode eq '${c}'`)
-            .join(" or ")})`
-        : "";
+    if (!user) {
+      console.warn("getpaymentTerms: No authenticated user available.");
 
-    let filter = ["displayName ne ''", "blocked eq false", categoryFilter]
-      .filter(Boolean)
-      .join(" and ");
+      return [];
+    }
+
+    let filter = "displayName ne ''";
 
     if (search?.trim()) {
       const escapedSearch = search.replace(/'/g, "''");
@@ -75,13 +72,13 @@ export async function getpaymentTerms(
       filter +=
         ` and (` +
         `contains(displayName,'${escapedSearch}') or ` +
-        `contains(number,'${escapedSearch}')` +
+        `contains(code,'${escapedSearch}')` +
         `)`;
     }
 
     const params: Record<string, string> = {
-      $orderby: "displayName asc",
       $filter: filter,
+      $orderby: "displayName asc",
     };
 
     const data = await bcGet<{ value: any[] }>("/paymentterms", params);
@@ -89,22 +86,33 @@ export async function getpaymentTerms(
     return data.value.map(mapBCPaymentTerm);
   } catch (error) {
     console.error("Failed to fetch paymentTerms:", error);
+
     return [];
   }
 }
 
 // ======================================================
-// GET ITEM BY NUMBER
+// GET PAYMENT TERM BY NUMBER
 // ======================================================
 
 export async function getItemByNo(
   itemNo: string,
 ): Promise<BCPaymentTerm | null> {
   try {
+    const user = useAuthStore.getState().user;
+
+    if (!user) {
+      console.warn("getItemByNo: No authenticated user available.");
+
+      return null;
+    }
+
+    const escapedItemNo = itemNo.replace(/'/g, "''");
+
     const data = await bcGet<{
       value: any[];
     }>("/paymentterms", {
-      $filter: `number eq '${itemNo}'`,
+      $filter: `code eq '${escapedItemNo}'`,
       $top: "1",
     });
 
@@ -114,34 +122,50 @@ export async function getItemByNo(
 
     return mapBCPaymentTerm(data.value[0]);
   } catch (error) {
-    console.error(`Failed to fetch item ${itemNo}:`, error);
+    console.error(`Failed to fetch payment term ${itemNo}:`, error);
 
     return null;
   }
 }
 
 // ======================================================
-// GET ITEM BY ID
+// GET PAYMENT TERM BY ID
 // ======================================================
 
 export async function getItemById(id: string): Promise<BCPaymentTerm | null> {
   try {
+    const user = useAuthStore.getState().user;
+
+    if (!user) {
+      console.warn("getItemById: No authenticated user available.");
+
+      return null;
+    }
+
     const data = await bcGet<any>(`/paymentterms(${id})`);
 
     return mapBCPaymentTerm(data);
   } catch (error) {
-    console.error(`Failed to fetch item ${id}:`, error);
+    console.error(`Failed to fetch payment term ${id}:`, error);
 
     return null;
   }
 }
 
 // ======================================================
-// GET ALL paymentTerms
+// GET ALL PAYMENT TERMS
 // ======================================================
 
 export async function getAllpaymentTerms(): Promise<BCPaymentTerm[]> {
   try {
+    const user = useAuthStore.getState().user;
+
+    if (!user) {
+      console.warn("getAllpaymentTerms: No authenticated user available.");
+
+      return [];
+    }
+
     const data = await bcGet<{ value: any[] }>("/paymentterms", {
       $orderby: "displayName asc",
     });
@@ -149,12 +173,13 @@ export async function getAllpaymentTerms(): Promise<BCPaymentTerm[]> {
     return data.value.map(mapBCPaymentTerm);
   } catch (error) {
     console.error("Failed to fetch all paymentTerms:", error);
+
     return [];
   }
 }
 
 // ======================================================
-// BC ITEM MAPPER
+// BC PAYMENT TERM MAPPER
 // ======================================================
 
 export function mapBCPaymentTerm(bc: any): BCPaymentTerm {

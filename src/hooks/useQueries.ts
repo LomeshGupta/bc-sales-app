@@ -11,6 +11,11 @@ import {
   getSalesOrderLines,
 } from "@/services/api/salesOrderService";
 import {
+  getSalesInvoices,
+  getSalesInvoiceById,
+  getSalesInvoiceLines,
+} from "@/services/api/salesInvoiceService";
+import {
   getCustomers,
   getAllCustomers,
   getCustomerById,
@@ -22,22 +27,28 @@ import { getReports, generateReport } from "@/services/api/reportService";
 import { getInventory, InventoryParams } from "@/services/api/inventoryService";
 import { CreateSalesOrderPayload, PaginationParams } from "@/types";
 import { useAppStore } from "@/store/appStore";
+import { useAuthStore } from "@/store/authStore";
 
 // ─── Query Keys ───────────────────────────────────────────────────────────────
+const userScopeKey = () => useAuthStore.getState().user?.username || "anonymous";
+
 export const QUERY_KEYS = {
   DASHBOARD_KPIS: ["dashboard", "kpis"],
   SALES_SUMMARY: ["dashboard", "salesSummary"],
   RECENT_ACTIVITY: ["dashboard", "recentActivity"],
-  SALES_ORDERS: (p: PaginationParams) => ["salesOrders", p],
-  SALES_ORDER: (id: string) => ["salesOrder", id],
-  SALES_ORDER_LINES: (id: string) => ["sales-order-lines", id],
-  CUSTOMERS: (p: PaginationParams) => ["customers", p],
-  ALL_CUSTOMERS: ["customers", "all"],
-  CUSTOMER: (id: string) => ["customer", id],
-  ITEMS: (search?: string) => ["items", search || ""],
-  LOCATIONS: (search?: string) => ["locations", search || ""],
+  SALES_ORDERS: (p: PaginationParams) => ["salesOrders", userScopeKey(), p],
+  SALES_ORDER: (id: string) => ["salesOrder", userScopeKey(), id],
+  SALES_ORDER_LINES: (id: string) => ["sales-order-lines", userScopeKey(), id],
+  SALES_INVOICES: (p: PaginationParams) => ["salesInvoices", userScopeKey(), p],
+  SALES_INVOICE: (id: string) => ["salesInvoice", userScopeKey(), id],
+  SALES_INVOICE_LINES: (id: string) => ["sales-invoice-lines", userScopeKey(), id],
+  CUSTOMERS: (p: PaginationParams) => ["customers", userScopeKey(), p],
+  ALL_CUSTOMERS: ["customers", "all", userScopeKey()],
+  CUSTOMER: (id: string) => ["customer", userScopeKey(), id],
+  ITEMS: (search?: string) => ["items", userScopeKey(), search || ""],
+  LOCATIONS: (search?: string) => ["locations", userScopeKey(), search || ""],
   REPORTS: ["reports"],
-  INVENTORY: (params: InventoryParams) => ["inventory", params],
+  INVENTORY: (params: InventoryParams) => ["inventory", userScopeKey(), params],
 } as const;
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
@@ -60,7 +71,7 @@ export function useRecentActivity() {
     queryKey: QUERY_KEYS.RECENT_ACTIVITY,
     queryFn: getRecentActivity,
     staleTime: 2 * 60_000,
-    refetchInterval: 5 * 60_000,
+    refetchInterval: false,
   });
 }
 
@@ -105,6 +116,32 @@ export function useCreateSalesOrder() {
   });
 }
 
+// ─── Sales Invoices ────────────────────────────────────────────────────────────
+export function useSalesInvoices(params: PaginationParams) {
+  return useQuery({
+    queryKey: QUERY_KEYS.SALES_INVOICES(params),
+    queryFn: () => getSalesInvoices(params),
+    staleTime: 2 * 60_000,
+    placeholderData: (prev) => prev,
+  });
+}
+
+export function useSalesInvoice(id: string) {
+  return useQuery({
+    queryKey: QUERY_KEYS.SALES_INVOICE(id),
+    queryFn: () => getSalesInvoiceById(id),
+    enabled: !!id,
+  });
+}
+
+export function useSalesInvoiceLines(id: string) {
+  return useQuery({
+    queryKey: QUERY_KEYS.SALES_INVOICE_LINES(id),
+    queryFn: () => getSalesInvoiceLines(id),
+    enabled: !!id,
+  });
+}
+
 // ─── Customers ────────────────────────────────────────────────────────────────
 export function useCustomers(params: PaginationParams) {
   return useQuery({
@@ -142,8 +179,12 @@ export function useItems(search?: string) {
 
 export const usePaymentTerms = () => {
   return useQuery({
-    queryKey: ["paymentTerms"],
+    queryKey: ["paymentTerms", userScopeKey()],
     queryFn: getAllpaymentTerms,
+    staleTime: 30 * 60_000,
+    gcTime: 60 * 60_000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 };
 
@@ -151,8 +192,10 @@ export function useLocations(search?: string) {
   return useQuery({
     queryKey: QUERY_KEYS.LOCATIONS(search),
     queryFn: () => getLocations(search),
-    staleTime: 15 * 60_000,
-    gcTime: 30 * 60_000,
+    staleTime: 30 * 60_000,
+    gcTime: 60 * 60_000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 }
 
@@ -178,8 +221,10 @@ export function useInventory(params: InventoryParams = {}) {
   return useQuery({
     queryKey: QUERY_KEYS.INVENTORY(params),
     queryFn: () => getInventory(params),
-    staleTime: 2 * 60_000,
-    gcTime: 10 * 60_000,
+    staleTime: 30_000,
+    gcTime: 5 * 60_000,
     placeholderData: (prev) => prev,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 }

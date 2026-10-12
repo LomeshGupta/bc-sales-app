@@ -8,12 +8,16 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 5 * 60 * 1000,
       gcTime: 10 * 60 * 1000,
-      retry: 2,
+      retry: (failureCount, error: any) => {
+        const status = error?.response?.status;
+        return failureCount < 1 && [408, 429, 502, 503, 504].includes(status);
+      },
       refetchOnWindowFocus: false,
-      refetchOnMount: true,
+      refetchOnMount: false,
+      refetchOnReconnect: false,
     },
     mutations: {
-      retry: 1,
+      retry: false,
     },
   },
 });

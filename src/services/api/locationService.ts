@@ -12,6 +12,8 @@ import { getOAuthToken } from "../auth/tokenService";
 // BC HELPER
 // ======================================================
 
+import { bcFetch } from "./bcRequest";
+
 async function bcGet<T>(
   path: string,
   params: Record<string, string> = {},
@@ -25,7 +27,7 @@ async function bcGet<T>(
     `/api/v2.0/companies(${BC_COMPANY_ID})${path}` +
     `?${searchParams.toString()}`;
 
-  const res = await fetch(url, {
+  const res = await bcFetch(url, {
     headers: {
       Authorization: `Bearer ${tokenData.access_token}`,
       Accept: "application/json",

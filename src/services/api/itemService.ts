@@ -8,11 +8,13 @@ import {
 import { BCItem } from "@/types";
 import { getOAuthToken } from "../auth/tokenService";
 import { useAuthStore } from "@/store/authStore";
-const user = useAuthStore.getState().user;
+
 
 // ======================================================
 // BC HELPER
 // ======================================================
+
+import { bcFetch } from "./bcRequest";
 
 async function bcGet<T>(
   path: string,
@@ -21,13 +23,12 @@ async function bcGet<T>(
   const searchParams = new URLSearchParams(params);
 
   const tokenData = await getOAuthToken();
-  console.log(user?.ItemCat);
   const url =
     `${BC_API_BASE_URL}/${BC_TENANT_ID}/${BC_ENV_NAME}` +
     `/api/v2.0/companies(${BC_COMPANY_ID})${path}` +
     `?${searchParams.toString()}`;
 
-  const res = await fetch(url, {
+  const res = await bcFetch(url, {
     headers: {
       Authorization: `Bearer ${tokenData.access_token}`,
       Accept: "application/json",
@@ -51,15 +52,18 @@ async function bcGet<T>(
 
 export async function getItems(search?: string): Promise<BCItem[]> {
   try {
+    const user = useAuthStore.getState().user;
     const categories = (user?.ItemCat ?? "")
       .split("|")
       .map((c) => c.trim())
       .filter(Boolean);
 
+    if (!categories.length) return [];
+
     const categoryFilter =
       categories.length > 0
         ? `(${categories
-            .map((c) => `itemCategoryCode eq '${c}'`)
+            .map((c) => `itemCategoryCode eq '${c.replace(/'/g, "''")}'`)
             .join(" or ")})`
         : "";
 
@@ -97,10 +101,14 @@ export async function getItems(search?: string): Promise<BCItem[]> {
 
 export async function getItemByNo(itemNo: string): Promise<BCItem | null> {
   try {
+    const user = useAuthStore.getState().user;
+    const categories = (user?.ItemCat ?? "").split("|").map(c => c.trim()).filter(Boolean);
+    if (!categories.length) return null;
+    const categoryFilter = `(${categories.map(c => `itemCategoryCode eq '${c.replace(/'/g, "''")}'`).join(" or ")})`;
     const data = await bcGet<{
       value: any[];
     }>("/items", {
-      $filter: `number eq '${itemNo}'`,
+      $filter: `number eq '${itemNo.replace(/'/g, "''")}' and ${categoryFilter}`,
       $top: "1",
     });
 
@@ -122,9 +130,15 @@ export async function getItemByNo(itemNo: string): Promise<BCItem | null> {
 
 export async function getItemById(id: string): Promise<BCItem | null> {
   try {
-    const data = await bcGet<any>(`/items(${id})`);
-
-    return mapBCItem(data);
+    const user = useAuthStore.getState().user;
+    const categories = (user?.ItemCat ?? "").split("|").map(c => c.trim()).filter(Boolean);
+    if (!categories.length) return null;
+    const categoryFilter = `(${categories.map(c => `itemCategoryCode eq '${c.replace(/'/g, "''")}'`).join(" or ")})`;
+    const data = await bcGet<{ value: any[] }>(`/items`, {
+      $filter: `id eq ${id} and ${categoryFilter}`,
+      $top: "1",
+    });
+    return data.value.length ? mapBCItem(data.value[0]) : null;
   } catch (error) {
     console.error(`Failed to fetch item ${id}:`, error);
 
@@ -138,15 +152,18 @@ export async function getItemById(id: string): Promise<BCItem | null> {
 
 export async function getAllItems(): Promise<BCItem[]> {
   try {
+    const user = useAuthStore.getState().user;
     const categories = (user?.ItemCat ?? "")
       .split("|")
       .map((c) => c.trim())
       .filter(Boolean);
 
+    if (!categories.length) return [];
+
     const categoryFilter =
       categories.length > 0
         ? `(${categories
-            .map((c) => `itemCategoryCode eq '${c}'`)
+            .map((c) => `itemCategoryCode eq '${c.replace(/'/g, "''")}'`)
             .join(" or ")})`
         : "";
 

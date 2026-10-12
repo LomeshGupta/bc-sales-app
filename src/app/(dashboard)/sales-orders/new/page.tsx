@@ -375,6 +375,7 @@ function LineItemRow({
       <TableCell sx={{ width: 120 }}>
         <TextField
           size="small"
+          disabled
           type="number"
           value={line.unitPrice}
           onChange={(e) => updateField("unitPrice", Number(e.target.value))}
@@ -392,6 +393,7 @@ function LineItemRow({
       <TableCell sx={{ width: 80 }}>
         <TextField
           size="small"
+          disabled
           type="number"
           value={line.discountPercent || 0}
           onChange={(e) =>

@@ -23,6 +23,7 @@ import {
   Inventory2,
   Logout,
   Circle,
+  ReceiptLong,
 } from "@mui/icons-material";
 import { useRouter, usePathname } from "next/navigation";
 import { motion } from "framer-motion";
@@ -81,6 +82,12 @@ export function Sidebar() {
       label: "Customers",
       path: ROUTES.CUSTOMERS,
       icon: PeopleAlt,
+      badge: null,
+    },
+    {
+      label: "Invoices",
+      path: ROUTES.INVOICES,
+      icon: ReceiptLong,
       badge: null,
     },
     {

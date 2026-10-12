@@ -14,6 +14,8 @@ import { useAuthStore } from "@/store/authStore";
 /*                                API HELPER                                  */
 /* -------------------------------------------------------------------------- */
 
+import { bcFetch } from "./bcRequest";
+
 async function bcGet<T>(
   path: string,
   params: Record<string, string> = {},
@@ -32,7 +34,7 @@ async function bcGet<T>(
 
   console.log("Fetching BC Data:", url);
 
-  const res = await fetch(url, {
+  const res = await bcFetch(url, {
     headers: {
       Authorization: `Bearer ${tokenData.access_token}`,
       Accept: "application/json",
@@ -67,7 +69,7 @@ async function bcPost<T>(
 
   console.log("Calling BC API:", url);
 
-  const res = await fetch(url, {
+  const res = await bcFetch(url, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${tokenData.access_token}`,

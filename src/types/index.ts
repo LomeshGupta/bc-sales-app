@@ -58,6 +58,49 @@ export interface SalesOrderLine {
   type?: string;
 }
 
+// ─── Sales Invoices ─────────────────────────────────────────────────────────────
+export interface SalesInvoice {
+  id: string;
+  invoiceNo: string;
+  orderNo?: string;
+  customerNo: string;
+  customerName: string;
+  postingDate: string;
+  documentDate?: string;
+  dueDate?: string;
+  amount: number;
+  amountIncludingVAT: number;
+  currency: string;
+  salesperson: string;
+  externalDocumentNo?: string;
+  yourReference?: string;
+  locationCode?: string;
+  paymentTermsCode?: string;
+  shipToName?: string;
+  shipToAddress?: string;
+  shipToCity?: string;
+  shipToCountry?: string;
+  invoiceDiscountAmount?: number;
+}
+
+export interface SalesInvoiceLine {
+  id: string;
+  invoiceId: string;
+  documentNo: string;
+  lineNo: number;
+  type?: string;
+  itemNo: string;
+  description: string;
+  description2?: string;
+  quantity: number;
+  unitPrice: number;
+  lineAmount: number;
+  amountIncludingVAT?: number;
+  discountPercent?: number;
+  unitOfMeasureCode?: string;
+  locationCode?: string;
+}
+
 // ─── Create Sales Order (Phase 2) ────────────────────────────────────────────
 export interface CreateSalesOrderLine {
   lineNo: number;
@@ -115,6 +158,7 @@ export interface InventoryItem {
   unitOfMeasureCode: string;
   locationCode: string;
   inventory: number;
+  channel?: string;
   lastModifiedDateTime?: string;
 }
 

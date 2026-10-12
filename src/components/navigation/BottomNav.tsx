@@ -195,7 +195,8 @@ export function BottomNav() {
 
           <ListItem disablePadding>
             <ListItemButton
-              disabled
+              selected={pathname.startsWith(ROUTES.INVOICES)}
+              onClick={() => navigate(ROUTES.INVOICES)}
               sx={{ borderRadius: 2, py: 1.5, mt: 0.5 }}
             >
               <ListItemIcon>
@@ -203,7 +204,7 @@ export function BottomNav() {
               </ListItemIcon>
               <ListItemText
                 primary="Invoices"
-                secondary="Coming soon"
+                secondary="Posted sales invoices"
               />
             </ListItemButton>
           </ListItem>

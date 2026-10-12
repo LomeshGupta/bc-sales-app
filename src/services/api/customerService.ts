@@ -11,7 +11,9 @@ import { DEFAULT_PAGE_SIZE } from "@/constants";
 import { getOAuthToken, calculateTokenExpiry } from "../auth/tokenService";
 
 import { useAuthStore } from "@/store/authStore";
-const user = useAuthStore.getState().user;
+
+
+import { bcFetch } from "./bcRequest";
 
 async function bcGet<T>(
   path: string,
@@ -24,7 +26,7 @@ async function bcGet<T>(
     `/ODataV4/company('${COMPANY_NAME}')${path}` +
     `?${searchParams.toString()}`;
   console.log(url);
-  const res = await fetch(url, {
+  const res = await bcFetch(url, {
     headers: {
       Authorization: `Bearer ${tokenData.access_token}`,
       Accept: "application/json",
@@ -48,6 +50,9 @@ export async function getCustomers(
   const { page = 1, pageSize = DEFAULT_PAGE_SIZE, search } = params;
 
   try {
+    const user = useAuthStore.getState().user;
+    if (!user?.username) return { data: [], total: 0, page, pageSize, totalPages: 0 };
+
     const bcParams: Record<string, string> = {
       $top: String(pageSize),
       $skip: String((page - 1) * pageSize),
@@ -58,7 +63,7 @@ export async function getCustomers(
     if (search?.trim()) {
       const escapedSearch = search.replace(/'/g, "''");
       console.log(escapedSearch);
-      bcParams["$filter"] = `contains(displayName,'${escapedSearch}')`;
+      bcParams["$filter"] = `displayName ne '' and userName eq '${user.username.replace(/'/g, "''")}' and contains(displayName,'${escapedSearch}')`;
     }
 
     const data = await bcGet<{
@@ -93,6 +98,8 @@ export async function getCustomers(
  */
 export async function getAllCustomers(): Promise<Customer[]> {
   try {
+    const user = useAuthStore.getState().user;
+    if (!user?.username) return [];
     const data = await bcGet<{ value: any[] }>("/velvotixcustomers", {
       $top: "5000",
       $orderby: "displayName asc",
@@ -108,9 +115,15 @@ export async function getAllCustomers(): Promise<Customer[]> {
 
 export async function getCustomerById(id: string): Promise<Customer | null> {
   try {
-    const data = await bcGet<any>(`/velvotixcustomers(${id})`);
-
-    return mapBCCustomer(data);
+    const user = useAuthStore.getState().user;
+    if (!user?.username) return null;
+    const escapedId = id.replace(/'/g, "''");
+    const escapedUser = user.username.replace(/'/g, "''");
+    const data = await bcGet<{ value: any[] }>(`/velvotixcustomers`, {
+      $filter: `id eq '${escapedId}' and userName eq '${escapedUser}'`,
+      $top: "1",
+    });
+    return data.value.length ? mapBCCustomer(data.value[0]) : null;
   } catch (error) {
     console.error(`Failed to fetch customer ${id}:`, error);
     return null;

@@ -126,6 +126,18 @@ export async function loginUser(credentials: LoginCredentials): Promise<{
       ItemCat: result.itemCategoryFilter,
     };
 
+    // Establish a signed HttpOnly server session. The server re-validates the
+    // credentials against the same BC login endpoint before granting the session.
+    const sessionResponse = await fetch("/api/auth/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: credentials.username, password: credentials.password }),
+      cache: "no-store",
+    });
+    if (!sessionResponse.ok) {
+      throw new Error("Could not establish the secure server session");
+    }
+
     // ============================================================
     // Save Auth State
     // ============================================================
@@ -236,5 +248,6 @@ async function saveLoginLog({
 }
 
 export function logoutUser(): void {
+  void fetch("/api/auth/session", { method: "DELETE", cache: "no-store" }).catch(() => undefined);
   useAuthStore.getState().logout();
 }

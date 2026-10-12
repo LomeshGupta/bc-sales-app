@@ -25,6 +25,7 @@ export const ROUTES = {
   LOGIN: "/login",
   DASHBOARD: "/dashboard",
   SALES_ORDERS: "/sales-orders",
+  INVOICES: "/invoices",
   NEW_ORDER: "/sales-orders/new",
   CUSTOMERS: "/customers",
   REPORTS: "/reports",
